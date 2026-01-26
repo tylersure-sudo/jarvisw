@@ -20,7 +20,6 @@ function App() {
 
   // 情绪和回响状态
   const [selectedMoods, setSelectedMoods] = useState<SelectedMood[]>([]);
-  const [customNote, setCustomNote] = useState('');
   const [phase, setPhase] = useState<AppPhase>('collecting');
   const [progress, setProgress] = useState(0);
   const [echo, setEcho] = useState<EchoResponse | null>(null);
@@ -53,7 +52,6 @@ function App() {
       setWeather(weatherData);
     } catch (error) {
       console.error('获取位置或天气失败:', error);
-      // 即使失败也设置默认值
       setLocation({
         latitude: 39.9,
         longitude: 116.4,
@@ -86,7 +84,7 @@ function App() {
 
     try {
       setPhase('responding');
-      const response = await generateEcho(context, selectedMoods, customNote);
+      const response = await generateEcho(context, selectedMoods);
 
       if (progressIntervalRef.current) {
         clearInterval(progressIntervalRef.current);
@@ -108,7 +106,6 @@ function App() {
   // 重置
   const handleReset = () => {
     setSelectedMoods([]);
-    setCustomNote('');
     setPhase('collecting');
     setProgress(0);
     setEcho(null);
@@ -156,8 +153,6 @@ function App() {
               <MoodBubbles
                 selectedMoods={selectedMoods}
                 onMoodsChange={setSelectedMoods}
-                customNote={customNote}
-                onCustomNoteChange={setCustomNote}
               />
 
               {/* 回响按钮 */}

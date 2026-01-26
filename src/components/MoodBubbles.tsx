@@ -5,8 +5,6 @@ import { MOOD_OPTIONS } from '../utils/moods';
 interface MoodBubblesProps {
   selectedMoods: SelectedMood[];
   onMoodsChange: (moods: SelectedMood[]) => void;
-  customNote: string;
-  onCustomNoteChange: (note: string) => void;
 }
 
 interface BubblePosition {
@@ -17,12 +15,7 @@ interface BubblePosition {
   size: number;
 }
 
-export function MoodBubbles({
-  selectedMoods,
-  onMoodsChange,
-  customNote,
-  onCustomNoteChange,
-}: MoodBubblesProps) {
+export function MoodBubbles({ selectedMoods, onMoodsChange }: MoodBubblesProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [positions, setPositions] = useState<Map<string, BubblePosition>>(new Map());
   const [hoveredMood, setHoveredMood] = useState<string | null>(null);
@@ -69,11 +62,9 @@ export function MoodBubbles({
         next.forEach((pos, id) => {
           let { x, y, vx, vy, size } = pos;
 
-          // 更新位置
           x += vx;
           y += vy;
 
-          // 边界反弹
           const padding = size / 2 + 10;
           if (x < padding || x > rect.width - padding) {
             vx = -vx * 0.8;
@@ -84,11 +75,9 @@ export function MoodBubbles({
             y = Math.max(padding, Math.min(rect.height - padding, y));
           }
 
-          // 添加轻微随机运动
           vx += (Math.random() - 0.5) * 0.02;
           vy += (Math.random() - 0.5) * 0.02;
 
-          // 限制速度
           const maxSpeed = 0.8;
           const speed = Math.sqrt(vx * vx + vy * vy);
           if (speed > maxSpeed) {
@@ -222,20 +211,6 @@ export function MoodBubbles({
           </div>
         </div>
       )}
-
-      {/* 自定义备注 */}
-      <div className="glass-card rounded-xl p-4 space-y-2">
-        <label className="text-xs text-gray-400">想对宇宙说点什么？（可选）</label>
-        <textarea
-          value={customNote}
-          onChange={(e) => onCustomNoteChange(e.target.value)}
-          placeholder="写下此刻你心中的想法..."
-          className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 resize-none focus:outline-none focus:border-purple-400/50 focus:ring-2 focus:ring-purple-400/20 text-sm"
-          rows={2}
-          maxLength={200}
-        />
-        <div className="text-xs text-gray-500 text-right">{customNote.length}/200</div>
-      </div>
     </div>
   );
 }
