@@ -1,6 +1,7 @@
 /**
  * 回响生成器 - Echo Generator
  * 整合文化智慧模块，生成故事和图片
+ * 支持 Gemini API
  */
 
 import type { SpaceTimeContext, SelectedMood, EchoResponse } from '../types';
@@ -16,17 +17,23 @@ import {
 
 // ==================== 配置 ====================
 
+export type AIProvider = 'gemini' | 'openai' | 'custom';
+
 export interface AIConfig {
   enabled: boolean;
+  provider: AIProvider;
+  geminiApiKey?: string;
   storyApiEndpoint?: string;
   storyApiKey?: string;
   imageApiEndpoint?: string;
   imageApiKey?: string;
 }
 
-// 默认配置（离线模式）
+// 默认配置 - 使用 Gemini
 const defaultConfig: AIConfig = {
-  enabled: false,
+  enabled: true,
+  provider: 'gemini',
+  geminiApiKey: 'AIzaSyAfTKruCoNpOOqHItV_JDq-nonl9Y4j6l8',
 };
 
 let currentConfig = { ...defaultConfig };
@@ -41,11 +48,66 @@ export function getAIConfig(): AIConfig {
   return { ...currentConfig };
 }
 
+// ==================== Gemini API ====================
+
+const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
+
+/** 使用 Gemini 生成故事 */
+async function generateStoryWithGemini(prompt: string): Promise<string> {
+  if (!currentConfig.geminiApiKey) {
+    throw new Error('Gemini API key not configured');
+  }
+
+  const url = `${GEMINI_API_BASE}/gemini-2.0-flash:generateContent?key=${currentConfig.geminiApiKey}`;
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      contents: [
+        {
+          parts: [{ text: prompt }],
+        },
+      ],
+      generationConfig: {
+        temperature: 0.85,
+        topK: 40,
+        topP: 0.95,
+        maxOutputTokens: 1500,
+      },
+      safetySettings: [
+        { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+        { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+        { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+        { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+      ],
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Gemini API error:', errorText);
+    throw new Error(`Gemini API error: ${response.status}`);
+  }
+
+  const data = await response.json();
+
+  // 提取生成的文本
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!text) {
+    throw new Error('No content generated from Gemini');
+  }
+
+  return text;
+}
+
 // ==================== 主生成函数 ====================
 
 /**
  * 生成回响（故事+图片）
- * 如果AI未启用，使用本地模板
+ * 优先使用 Gemini API，失败时回退到本地模板
  */
 export async function generateEcho(
   context: SpaceTimeContext,
@@ -55,33 +117,34 @@ export async function generateEcho(
   const wisdomAnalysis = getWisdomAnalysis(context, moods);
   const promptData = preparePromptData(context, moods, wisdomAnalysis);
 
-  // 模拟延迟（15-25秒）
-  const delay = 15000 + Math.random() * 10000;
-  await new Promise((resolve) => setTimeout(resolve, delay));
-
   let story: string;
   let imageUrl: string;
 
-  if (currentConfig.enabled && currentConfig.storyApiEndpoint) {
-    // AI 模式
+  // 尝试使用 AI 生成故事
+  if (currentConfig.enabled) {
     try {
-      story = await generateStoryWithAI(promptData);
-    } catch (error) {
-      console.error('AI故事生成失败，使用本地模板', error);
-      story = generateLocalStory(wisdomAnalysis, context, moods);
-    }
+      console.log('正在使用 Gemini 生成故事...');
+      const prompt = generateStoryPrompt(promptData);
 
-    try {
-      imageUrl = await generateImageWithAI(promptData);
+      if (currentConfig.provider === 'gemini' && currentConfig.geminiApiKey) {
+        story = await generateStoryWithGemini(prompt);
+        console.log('Gemini 故事生成成功');
+      } else if (currentConfig.provider === 'custom' && currentConfig.storyApiEndpoint) {
+        story = await generateStoryWithCustomAPI(promptData);
+      } else {
+        throw new Error('No valid AI provider configured');
+      }
     } catch (error) {
-      console.error('AI图片生成失败，使用占位图', error);
-      imageUrl = getPlaceholderImage(wisdomAnalysis, context, moods);
+      console.error('AI故事生成失败，使用本地模板:', error);
+      story = generateLocalStory(wisdomAnalysis, context, moods);
     }
   } else {
     // 离线模式
     story = generateLocalStory(wisdomAnalysis, context, moods);
-    imageUrl = getPlaceholderImage(wisdomAnalysis, context, moods);
   }
+
+  // 图片暂时使用占位图（可以后续接入图像生成API）
+  imageUrl = getPlaceholderImage(wisdomAnalysis, context, moods);
 
   return {
     story,
@@ -90,19 +153,15 @@ export async function generateEcho(
   };
 }
 
-// ==================== AI 生成函数（预留接口） ====================
+// ==================== 自定义 API 支持 ====================
 
-/** 使用AI生成故事 */
-async function generateStoryWithAI(promptData: ReturnType<typeof preparePromptData>): Promise<string> {
+/** 使用自定义API生成故事 */
+async function generateStoryWithCustomAPI(promptData: ReturnType<typeof preparePromptData>): Promise<string> {
   const prompt = generateStoryPrompt(promptData);
 
   if (!currentConfig.storyApiEndpoint) {
     throw new Error('Story API endpoint not configured');
   }
-
-  // TODO: 实现实际的API调用
-  // 这里是预留的接口，可以接入任何大模型API
-  // 如 OpenAI, Claude, 通义千问, 文心一言等
 
   const response = await fetch(currentConfig.storyApiEndpoint, {
     method: 'POST',
@@ -125,40 +184,6 @@ async function generateStoryWithAI(promptData: ReturnType<typeof preparePromptDa
 
   const data = await response.json();
   return data.content || data.text || data.choices?.[0]?.message?.content || '';
-}
-
-/** 使用AI生成图片 */
-async function generateImageWithAI(promptData: ReturnType<typeof preparePromptData>): Promise<string> {
-  const prompt = generateImagePrompt(promptData);
-
-  if (!currentConfig.imageApiEndpoint) {
-    throw new Error('Image API endpoint not configured');
-  }
-
-  // TODO: 实现实际的API调用
-  // 如 DALL-E, Midjourney API, Stable Diffusion等
-
-  const response = await fetch(currentConfig.imageApiEndpoint, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(currentConfig.imageApiKey && {
-        Authorization: `Bearer ${currentConfig.imageApiKey}`,
-      }),
-    },
-    body: JSON.stringify({
-      prompt,
-      size: '1024x1024',
-      n: 1,
-    }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`API error: ${response.status}`);
-  }
-
-  const data = await response.json();
-  return data.url || data.data?.[0]?.url || '';
 }
 
 // ==================== 本地生成函数 ====================
@@ -293,7 +318,7 @@ export function getDebugInfo(
   const promptData = preparePromptData(context, moods, analysis);
 
   return {
-    config: currentConfig,
+    config: { ...currentConfig, geminiApiKey: '***hidden***' },
     analysis,
     storyPrompt: generateStoryPrompt(promptData),
     imagePrompt: generateImagePrompt(promptData),
