@@ -5,6 +5,7 @@
  */
 
 import type { SpaceTimeContext, SelectedMood, EchoResponse } from '../types';
+import type { EnergyBlock } from '../components/EnergyBlocks';
 import {
   getWisdomAnalysis,
   preparePromptData,
@@ -160,14 +161,21 @@ async function generateImageWithGemini(prompt: string): Promise<string> {
 /**
  * 生成回响（故事+图片）
  * 优先使用 Gemini API，失败时回退到本地模板
+ * @param energies 用户在生成过程中收集的能量块，会影响生成结果
  */
 export async function generateEcho(
   context: SpaceTimeContext,
-  moods: SelectedMood[]
+  moods: SelectedMood[],
+  energies: EnergyBlock[] = []
 ): Promise<EchoResponse> {
   // 获取文化智慧分析
   const wisdomAnalysis = getWisdomAnalysis(context, moods);
   const promptData = preparePromptData(context, moods, wisdomAnalysis);
+
+  // 添加能量块影响
+  const energyInfluence = energies.length > 0
+    ? `\n\n## 特别灵感注入\n用户在感应过程中收集了以下能量：${energies.map(e => e.label).join('、')}。\n请在故事中巧妙融入这些能量特质，让它们成为故事的一部分。`
+    : '';
 
   let story: string;
   let imageUrl: string;
@@ -176,7 +184,8 @@ export async function generateEcho(
   if (currentConfig.enabled) {
     try {
       console.log('正在使用 Gemini 生成故事...');
-      const prompt = generateStoryPrompt(promptData);
+      const basePrompt = generateStoryPrompt(promptData);
+      const prompt = basePrompt + energyInfluence;
 
       if (currentConfig.provider === 'gemini' && currentConfig.geminiApiKey) {
         story = await generateStoryWithGemini(prompt);
@@ -198,7 +207,22 @@ export async function generateEcho(
   if (currentConfig.enabled && currentConfig.enableImageGen && currentConfig.geminiApiKey) {
     try {
       console.log('正在使用 Gemini Imagen 生成图片...');
-      const imagePrompt = generateImagePrompt(promptData);
+      let imagePrompt = generateImagePrompt(promptData);
+      // 添加能量块对图片的影响
+      if (energies.length > 0) {
+        const energyVisuals = energies.map(e => {
+          const visualMap: Record<string, string> = {
+            'light': 'radiant golden light rays',
+            'warmth': 'warm orange glow',
+            'wisdom': 'mystical purple aura',
+            'strength': 'powerful emerald energy',
+            'peace': 'serene blue atmosphere',
+            'mystery': 'ethereal violet mist',
+          };
+          return visualMap[e.type] || e.label;
+        });
+        imagePrompt += `, ${energyVisuals.join(', ')}`;
+      }
       imageUrl = await generateImageWithGemini(imagePrompt);
       console.log('Gemini 图片生成成功');
     } catch (error) {

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { StarryBackground, SpaceTimeDisplay, EchoButton, EchoResult } from './components';
+import { StarryBackground, SpaceTimeDisplay, EchoButton, EchoResult, EnergyBlocks } from './components';
 import { MoodBubbles } from './components/MoodBubbles';
+import type { EnergyBlock } from './components/EnergyBlocks';
 import { generateEcho } from './utils/echoGenerator';
 import { getCurrentLocation } from './utils/location';
 import { getWeather } from './utils/weather';
@@ -14,12 +15,15 @@ function App() {
   const [location, setLocation] = useState<LocationInfo | null>(null);
   const [weather, setWeather] = useState<WeatherInfo | null>(null);
   const [context, setContext] = useState<SpaceTimeContext>(() => buildSpaceTimeContext(null, null));
-  const [selectedMoods, setSelectedMoods] = useState<SelectedMood[]>([]);
+  const [selectedMood, setSelectedMood] = useState<SelectedMood | null>(null);
   const [phase, setPhase] = useState<AppPhase>('collecting');
   const [progress, setProgress] = useState(0);
   const [echo, setEcho] = useState<EchoResponse | null>(null);
+  const [collectedEnergies, setCollectedEnergies] = useState<EnergyBlock[]>([]);
+  const [showEnergyBlocks, setShowEnergyBlocks] = useState(false);
 
   const progressIntervalRef = useRef<number | null>(null);
+  const generationRef = useRef<boolean>(false);
 
   useEffect(() => {
     setContext(buildSpaceTimeContext(location, weather));
@@ -54,32 +58,47 @@ function App() {
     }
   }, []);
 
-  const canEcho = selectedMoods.length > 0;
+  const canEcho = selectedMood !== null;
 
+  // 处理能量收集
+  const handleEnergyCollected = useCallback((energies: EnergyBlock[]) => {
+    setCollectedEnergies(energies);
+  }, []);
+
+  // 开始生成回响
   const handleEcho = async () => {
-    if (!canEcho) return;
+    if (!canEcho || !selectedMood) return;
 
     setPhase('listening');
     setProgress(0);
+    setCollectedEnergies([]);
+    setShowEnergyBlocks(true);
+    generationRef.current = true;
 
     const startTime = Date.now();
-    const estimatedDuration = 20000;
+    const estimatedDuration = 25000; // 25秒，给用户更多时间收集能量
 
     progressIntervalRef.current = window.setInterval(() => {
       const elapsed = Date.now() - startTime;
-      const newProgress = Math.min((elapsed / estimatedDuration) * 90, 90);
+      const newProgress = Math.min((elapsed / estimatedDuration) * 85, 85);
       setProgress(newProgress);
     }, 100);
 
+    // 等待一段时间让用户收集能量，然后开始生成
+    await new Promise(resolve => setTimeout(resolve, 5000));
+
     try {
       setPhase('responding');
-      const response = await generateEcho(context, selectedMoods);
+
+      // 使用收集的能量生成回响
+      const response = await generateEcho(context, [selectedMood], collectedEnergies);
 
       if (progressIntervalRef.current) {
         clearInterval(progressIntervalRef.current);
       }
 
       setProgress(100);
+      setShowEnergyBlocks(false);
       setEcho(response);
       setPhase('complete');
     } catch (error) {
@@ -87,16 +106,21 @@ function App() {
       if (progressIntervalRef.current) {
         clearInterval(progressIntervalRef.current);
       }
+      setShowEnergyBlocks(false);
       setPhase('collecting');
       setProgress(0);
     }
+
+    generationRef.current = false;
   };
 
   const handleReset = () => {
-    setSelectedMoods([]);
+    setSelectedMood(null);
     setPhase('collecting');
     setProgress(0);
     setEcho(null);
+    setCollectedEnergies([]);
+    setShowEnergyBlocks(false);
   };
 
   useEffect(() => {
@@ -111,22 +135,28 @@ function App() {
     <div className="min-h-screen-safe cosmic-gradient text-white relative overflow-x-hidden">
       <StarryBackground />
 
+      {/* 能量块交互层 */}
+      <EnergyBlocks
+        isActive={showEnergyBlocks}
+        onEnergyCollected={handleEnergyCollected}
+      />
+
       <div className="relative z-10 min-h-screen-safe flex flex-col safe-top safe-bottom">
-        {/* 科幻标题 */}
+        {/* 标题 */}
         <header className="px-4 pt-3 pb-2 sm:px-6 sm:pt-4 sm:pb-3 text-center shrink-0">
           <div className="inline-block relative">
             {/* 装饰线 - 只在大屏显示 */}
-            <div className="hidden sm:block absolute -left-10 top-1/2 w-8 h-px bg-gradient-to-r from-transparent to-cyan-500/50" />
-            <div className="hidden sm:block absolute -right-10 top-1/2 w-8 h-px bg-gradient-to-l from-transparent to-cyan-500/50" />
+            <div className="hidden sm:block absolute -left-10 top-1/2 w-8 h-px bg-gradient-to-r from-transparent to-amber-500/50" />
+            <div className="hidden sm:block absolute -right-10 top-1/2 w-8 h-px bg-gradient-to-l from-transparent to-amber-500/50" />
 
-            <h1 className="text-xl xs:text-2xl sm:text-3xl md:text-4xl font-light tracking-[0.2em] sm:tracking-[0.3em] uppercase animate-float">
-              <span className="neon-text text-cyan-200">COSMIC</span>
-              <span className="text-white mx-1 sm:mx-2">·</span>
-              <span className="neon-text-purple text-purple-200">ECHO</span>
+            <h1 className="text-xl xs:text-2xl sm:text-3xl md:text-4xl font-light tracking-[0.15em] sm:tracking-[0.2em]">
+              <span className="text-amber-200/90">灵感</span>
+              <span className="text-white/60 mx-1 sm:mx-2">·</span>
+              <span className="text-cyan-200/90">回响</span>
             </h1>
           </div>
-          <p className="mt-1 sm:mt-2 text-gray-500 text-[10px] sm:text-xs font-mono tracking-wider">
-            // UNIVERSAL VOICE INTERFACE v1.0
+          <p className="mt-1 sm:mt-2 text-gray-500 text-[10px] sm:text-xs font-light tracking-wider">
+            聆听宇宙的声音
           </p>
         </header>
 
@@ -142,8 +172,8 @@ function App() {
               />
 
               <MoodBubbles
-                selectedMoods={selectedMoods}
-                onMoodsChange={setSelectedMoods}
+                selectedMood={selectedMood}
+                onMoodChange={setSelectedMood}
               />
 
               <div className="pt-1 sm:pt-2 pb-safe">
@@ -154,8 +184,8 @@ function App() {
                   progress={progress}
                 />
                 {!canEcho && (
-                  <p className="text-center text-[10px] sm:text-xs text-gray-600 mt-3 sm:mt-4 font-mono">
-                    SELECT YOUR CURRENT STATE TO CONTINUE
+                  <p className="text-center text-[10px] sm:text-xs text-gray-600 mt-3 sm:mt-4 font-light">
+                    选择你此刻的心境以继续
                   </p>
                 )}
               </div>
@@ -167,9 +197,9 @@ function App() {
 
         {/* 底部 */}
         <footer className="px-3 py-2 sm:p-3 text-center shrink-0 pb-safe">
-          <div className="flex items-center justify-center gap-2 text-[10px] sm:text-xs text-gray-600 font-mono">
-            <div className="w-1.5 h-1.5 rounded-full bg-cyan-500/50 animate-pulse" />
-            <span>CONNECTED TO UNIVERSE</span>
+          <div className="flex items-center justify-center gap-2 text-[10px] sm:text-xs text-gray-600 font-light">
+            <div className="w-1.5 h-1.5 rounded-full bg-amber-500/50 animate-pulse" />
+            <span>与宇宙同频</span>
           </div>
         </footer>
       </div>
