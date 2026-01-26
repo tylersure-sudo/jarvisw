@@ -77,3 +77,8 @@ export function getCategoryColor(category: MoodOption['category']): string {
   };
   return colors[category];
 }
+
+export function getRandomMoods(count: number = 2): MoodOption[] {
+  const shuffled = [...MOOD_OPTIONS].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, Math.min(count, 3));
+}

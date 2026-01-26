@@ -2,19 +2,17 @@ import { useState, useEffect, useRef } from 'react';
 import {
   StarryBackground,
   SpaceTimeDisplay,
-  MoodSelector,
   EchoButton,
   EchoResult,
 } from './components';
 import { useSpaceTime } from './hooks/useSpaceTime';
 import { generateEcho } from './utils/echoGenerator';
-import type { AppPhase, SelectedMood, EchoResponse } from './types';
+import { getRandomMoods } from './utils/moods';
+import type { AppPhase, EchoResponse } from './types';
 import './App.css';
 
 function App() {
   const { context, loading } = useSpaceTime();
-  const [selectedMoods, setSelectedMoods] = useState<SelectedMood[]>([]);
-  const [customNote, setCustomNote] = useState('');
   const [phase, setPhase] = useState<AppPhase>('collecting');
   const [progress, setProgress] = useState(0);
   const [echo, setEcho] = useState<EchoResponse | null>(null);
@@ -22,7 +20,7 @@ function App() {
   const progressIntervalRef = useRef<number | null>(null);
 
   // 是否可以点击回响按钮
-  const canEcho = selectedMoods.length > 0 && !loading;
+  const canEcho = !loading;
 
   // 处理回响点击
   const handleEcho = async () => {
@@ -30,6 +28,9 @@ function App() {
 
     setPhase('listening');
     setProgress(0);
+
+    // 随机选择情绪
+    const randomMoods = getRandomMoods(2).map(mood => ({ mood }));
 
     // 模拟进度
     const startTime = Date.now();
@@ -43,7 +44,7 @@ function App() {
 
     try {
       setPhase('responding');
-      const response = await generateEcho(context, selectedMoods, customNote);
+      const response = await generateEcho(context, randomMoods);
 
       // 清除进度定时器
       if (progressIntervalRef.current) {
@@ -65,8 +66,6 @@ function App() {
 
   // 重置
   const handleReset = () => {
-    setSelectedMoods([]);
-    setCustomNote('');
     setPhase('collecting');
     setProgress(0);
     setEcho(null);
@@ -105,14 +104,6 @@ function App() {
               {/* 时空信息展示 */}
               <SpaceTimeDisplay context={context} loading={loading} />
 
-              {/* 情绪选择 */}
-              <MoodSelector
-                selectedMoods={selectedMoods}
-                onMoodsChange={setSelectedMoods}
-                customNote={customNote}
-                onCustomNoteChange={setCustomNote}
-              />
-
               {/* 回响按钮 */}
               <div className="pt-4">
                 <EchoButton
@@ -121,11 +112,6 @@ function App() {
                   onClick={handleEcho}
                   progress={progress}
                 />
-                {!canEcho && selectedMoods.length === 0 && (
-                  <p className="text-center text-sm text-gray-500 mt-4">
-                    请先选择至少一个情绪
-                  </p>
-                )}
               </div>
             </>
           ) : (
