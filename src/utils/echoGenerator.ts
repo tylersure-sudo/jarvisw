@@ -1,7 +1,7 @@
 /**
  * 回响生成器 - Echo Generator
  * 整合文化智慧模块，生成故事和图片
- * 支持 Gemini API
+ * 支持 Gemini API (文字 + 图片)
  */
 
 import type { SpaceTimeContext, SelectedMood, EchoResponse } from '../types';
@@ -23,6 +23,7 @@ export interface AIConfig {
   enabled: boolean;
   provider: AIProvider;
   geminiApiKey?: string;
+  enableImageGen: boolean;
   storyApiEndpoint?: string;
   storyApiKey?: string;
   imageApiEndpoint?: string;
@@ -34,6 +35,7 @@ const defaultConfig: AIConfig = {
   enabled: true,
   provider: 'gemini',
   geminiApiKey: 'AIzaSyAfTKruCoNpOOqHItV_JDq-nonl9Y4j6l8',
+  enableImageGen: true,
 };
 
 let currentConfig = { ...defaultConfig };
@@ -93,14 +95,64 @@ async function generateStoryWithGemini(prompt: string): Promise<string> {
   }
 
   const data = await response.json();
-
-  // 提取生成的文本
   const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
   if (!text) {
     throw new Error('No content generated from Gemini');
   }
 
   return text;
+}
+
+/** 使用 Gemini Imagen 生成图片 */
+async function generateImageWithGemini(prompt: string): Promise<string> {
+  if (!currentConfig.geminiApiKey) {
+    throw new Error('Gemini API key not configured');
+  }
+
+  // 使用 Imagen 3 模型生成图片
+  const url = `${GEMINI_API_BASE}/imagen-3.0-generate-002:predict?key=${currentConfig.geminiApiKey}`;
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      instances: [
+        {
+          prompt: prompt,
+        },
+      ],
+      parameters: {
+        sampleCount: 1,
+        aspectRatio: '3:4',
+        personGeneration: 'dont_allow',
+        safetyFilterLevel: 'block_few',
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Gemini Imagen API error:', errorText);
+    throw new Error(`Gemini Imagen API error: ${response.status}`);
+  }
+
+  const data = await response.json();
+
+  // Imagen 返回 base64 编码的图片
+  const imageData = data.predictions?.[0]?.bytesBase64Encoded;
+  if (imageData) {
+    return `data:image/png;base64,${imageData}`;
+  }
+
+  // 如果返回的是 URL
+  const imageUrl = data.predictions?.[0]?.uri;
+  if (imageUrl) {
+    return imageUrl;
+  }
+
+  throw new Error('No image generated from Gemini Imagen');
 }
 
 // ==================== 主生成函数 ====================
@@ -139,12 +191,23 @@ export async function generateEcho(
       story = generateLocalStory(wisdomAnalysis, context, moods);
     }
   } else {
-    // 离线模式
     story = generateLocalStory(wisdomAnalysis, context, moods);
   }
 
-  // 图片暂时使用占位图（可以后续接入图像生成API）
-  imageUrl = getPlaceholderImage(wisdomAnalysis, context, moods);
+  // 尝试使用 Gemini 生成图片
+  if (currentConfig.enabled && currentConfig.enableImageGen && currentConfig.geminiApiKey) {
+    try {
+      console.log('正在使用 Gemini Imagen 生成图片...');
+      const imagePrompt = generateImagePrompt(promptData);
+      imageUrl = await generateImageWithGemini(imagePrompt);
+      console.log('Gemini 图片生成成功');
+    } catch (error) {
+      console.error('AI图片生成失败，使用占位图:', error);
+      imageUrl = getPlaceholderImage(wisdomAnalysis, context, moods);
+    }
+  } else {
+    imageUrl = getPlaceholderImage(wisdomAnalysis, context, moods);
+  }
 
   return {
     story,
@@ -155,7 +218,6 @@ export async function generateEcho(
 
 // ==================== 自定义 API 支持 ====================
 
-/** 使用自定义API生成故事 */
 async function generateStoryWithCustomAPI(promptData: ReturnType<typeof preparePromptData>): Promise<string> {
   const prompt = generateStoryPrompt(promptData);
 
@@ -188,7 +250,6 @@ async function generateStoryWithCustomAPI(promptData: ReturnType<typeof prepareP
 
 // ==================== 本地生成函数 ====================
 
-/** 本地生成故事（基于智慧模块） */
 function generateLocalStory(
   analysis: WisdomAnalysis,
   context: SpaceTimeContext,
@@ -198,61 +259,43 @@ function generateLocalStory(
   const archetype = getArchetypeInfo(psychology.archetype);
   const element = getElementChineseName(huangdi.dominantElement);
 
-  // 获取时间描述
   const timeDesc = context.timeOfDay === 'night' ? '夜幕低垂' :
     context.timeOfDay === 'dawn' ? '晨曦微露' :
       context.timeOfDay === 'morning' ? '阳光正好' :
         context.timeOfDay === 'afternoon' ? '午后时光' :
           '暮色渐浓';
 
-  // 获取季节描述
   const seasonDesc = context.season === 'spring' ? '春风轻拂' :
     context.season === 'summer' ? '夏日炎炎' :
       context.season === 'autumn' ? '秋意渐浓' :
         '冬雪飘零';
 
-  // 获取情绪描述
   let moodDesc = '平静如水';
   if (moods.length > 0) {
     const primary = moods[0].mood;
     moodDesc = `${primary.emoji} ${primary.label}`;
   }
 
-  // 天气描述
   const weatherDesc = context.weather?.description || '天气变幻';
 
-  // 构建故事
   let story = `${timeDesc}，${seasonDesc}的${context.location?.city || '这座城市'}，${weatherDesc}。`;
   story += `你正感受着「${moodDesc}」的情绪波动。\n\n`;
-
-  // 融入易经智慧
   story += `宇宙为你呈现了「${iChing.hexagram.name}」的卦象——${iChing.hexagram.image}\n\n`;
   story += `${iChing.hexagram.meaning}\n\n`;
-
-  // 融入五行分析
   story += `此刻，${element}气在你的能量场中流转。`;
   const emotionPart = huangdi.emotionAdvice.split('\n\n')[0];
   if (emotionPart) {
     story += emotionPart.replace(/从情志角度来看，[^。]+。/, '');
   }
   story += '\n\n';
-
-  // 融入心理学分析
   story += `你的内心深处，住着一位「${archetype.chineseName}」——${archetype.description}\n\n`;
-
-  // 融入六爻预测
   story += `${sixLines.shortTerm}\n\n`;
-
-  // 宇宙的建议
   story += `来自宇宙的声音轻轻说道：\n"${iChing.guidance}"\n\n`;
-
-  // 肯定语
   story += `✨ ${psychology.affirmation}`;
 
   return story;
 }
 
-/** 获取占位图片（基于Unsplash） */
 function getPlaceholderImage(
   analysis: WisdomAnalysis,
   context: SpaceTimeContext,
@@ -260,7 +303,6 @@ function getPlaceholderImage(
 ): string {
   const keywords: string[] = [];
 
-  // 时间关键词
   const timeKeywords: Record<string, string> = {
     dawn: 'sunrise,dawn',
     morning: 'morning,sunlight',
@@ -270,7 +312,6 @@ function getPlaceholderImage(
   };
   keywords.push(timeKeywords[context.timeOfDay] || 'sky');
 
-  // 季节关键词
   const seasonKeywords: Record<string, string> = {
     spring: 'spring,flowers',
     summer: 'summer,warm',
@@ -279,7 +320,6 @@ function getPlaceholderImage(
   };
   keywords.push(seasonKeywords[context.season] || 'nature');
 
-  // 五行关键词
   const elementKeywords: Record<string, string> = {
     wood: 'forest,green',
     fire: 'fire,warmth',
@@ -289,7 +329,6 @@ function getPlaceholderImage(
   };
   keywords.push(elementKeywords[analysis.huangdi.dominantElement] || 'cosmic');
 
-  // 情绪关键词
   if (moods.length > 0) {
     const primaryMood = moods[0].mood;
     if (primaryMood.category === 'positive') {
@@ -301,7 +340,6 @@ function getPlaceholderImage(
     }
   }
 
-  // 添加统一的主题关键词
   keywords.push('spiritual,meditation');
 
   return `https://source.unsplash.com/800x1200/?${keywords.join(',')}`;
@@ -309,7 +347,6 @@ function getPlaceholderImage(
 
 // ==================== 调试和导出 ====================
 
-/** 获取调试信息（用于开发） */
 export function getDebugInfo(
   context: SpaceTimeContext,
   moods: SelectedMood[]
