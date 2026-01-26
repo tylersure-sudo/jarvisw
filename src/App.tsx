@@ -108,30 +108,30 @@ function App() {
   }, []);
 
   return (
-    <div className="min-h-screen min-h-[100dvh] cosmic-gradient text-white relative overflow-x-hidden">
+    <div className="min-h-screen-safe cosmic-gradient text-white relative overflow-x-hidden">
       <StarryBackground />
 
-      <div className="relative z-10 min-h-screen min-h-[100dvh] flex flex-col">
+      <div className="relative z-10 min-h-screen-safe flex flex-col safe-top safe-bottom">
         {/* 科幻标题 */}
-        <header className="p-4 sm:p-6 text-center shrink-0">
+        <header className="px-4 pt-3 pb-2 sm:px-6 sm:pt-4 sm:pb-3 text-center shrink-0">
           <div className="inline-block relative">
-            {/* 装饰线 */}
-            <div className="absolute -left-8 top-1/2 w-6 h-px bg-gradient-to-r from-transparent to-cyan-500/50" />
-            <div className="absolute -right-8 top-1/2 w-6 h-px bg-gradient-to-l from-transparent to-cyan-500/50" />
+            {/* 装饰线 - 只在大屏显示 */}
+            <div className="hidden sm:block absolute -left-10 top-1/2 w-8 h-px bg-gradient-to-r from-transparent to-cyan-500/50" />
+            <div className="hidden sm:block absolute -right-10 top-1/2 w-8 h-px bg-gradient-to-l from-transparent to-cyan-500/50" />
 
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-light tracking-[0.3em] uppercase animate-float">
+            <h1 className="text-xl xs:text-2xl sm:text-3xl md:text-4xl font-light tracking-[0.2em] sm:tracking-[0.3em] uppercase animate-float">
               <span className="neon-text text-cyan-200">COSMIC</span>
-              <span className="text-white mx-2">·</span>
+              <span className="text-white mx-1 sm:mx-2">·</span>
               <span className="neon-text-purple text-purple-200">ECHO</span>
             </h1>
           </div>
-          <p className="mt-2 sm:mt-3 text-gray-500 text-xs sm:text-sm font-mono tracking-wider">
+          <p className="mt-1 sm:mt-2 text-gray-500 text-[10px] sm:text-xs font-mono tracking-wider">
             // UNIVERSAL VOICE INTERFACE v1.0
           </p>
         </header>
 
         {/* 主体内容区 */}
-        <main className="flex-1 px-3 sm:px-4 pb-4 sm:pb-8 max-w-lg mx-auto w-full space-y-4 sm:space-y-6 overflow-y-auto">
+        <main className="flex-1 px-3 sm:px-4 pb-2 sm:pb-4 max-w-lg mx-auto w-full space-y-3 sm:space-y-4 overflow-y-auto">
           {phase !== 'complete' || !echo ? (
             <>
               <SpaceTimeDisplay
@@ -146,7 +146,7 @@ function App() {
                 onMoodsChange={setSelectedMoods}
               />
 
-              <div className="pt-2 sm:pt-4 pb-safe">
+              <div className="pt-1 sm:pt-2 pb-safe">
                 <EchoButton
                   phase={phase}
                   disabled={!canEcho}
@@ -154,7 +154,7 @@ function App() {
                   progress={progress}
                 />
                 {!canEcho && (
-                  <p className="text-center text-xs text-gray-600 mt-4 font-mono">
+                  <p className="text-center text-[10px] sm:text-xs text-gray-600 mt-3 sm:mt-4 font-mono">
                     SELECT YOUR CURRENT STATE TO CONTINUE
                   </p>
                 )}
@@ -166,8 +166,8 @@ function App() {
         </main>
 
         {/* 底部 */}
-        <footer className="p-3 sm:p-4 text-center shrink-0">
-          <div className="flex items-center justify-center gap-2 text-xs text-gray-600 font-mono">
+        <footer className="px-3 py-2 sm:p-3 text-center shrink-0 pb-safe">
+          <div className="flex items-center justify-center gap-2 text-[10px] sm:text-xs text-gray-600 font-mono">
             <div className="w-1.5 h-1.5 rounded-full bg-cyan-500/50 animate-pulse" />
             <span>CONNECTED TO UNIVERSE</span>
           </div>

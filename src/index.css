@@ -6,10 +6,43 @@
   box-sizing: border-box;
 }
 
+/* 根元素设置 - 支持安全区域 */
+:root {
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+}
+
+html {
+  /* 防止iOS弹性滚动 */
+  height: 100%;
+  overflow: hidden;
+}
+
 body {
   min-height: 100vh;
-  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  min-height: 100dvh;
+  min-height: -webkit-fill-available;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
   background: #030208;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 安全区域内边距 */
+.safe-top { padding-top: var(--sat); }
+.safe-bottom { padding-bottom: var(--sab); }
+.safe-left { padding-left: var(--sal); }
+.safe-right { padding-right: var(--sar); }
+.pb-safe { padding-bottom: max(1rem, var(--sab)); }
+
+/* 修复100vh在移动端的问题 */
+.min-h-screen-safe {
+  min-height: 100vh;
+  min-height: 100dvh;
+  min-height: -webkit-fill-available;
 }
 
 /* 深空背景 - 作为备用 */
@@ -251,4 +284,154 @@ body {
 ::selection {
   background: rgba(100, 150, 255, 0.3);
   color: white;
+}
+
+/* ==================== 跨平台优化 ==================== */
+
+/* 触摸设备优化 */
+@media (hover: none) and (pointer: coarse) {
+  /* 移动端按钮更大的点击区域 */
+  button,
+  [role="button"],
+  .mood-tag {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* 禁用悬停效果 */
+  .sci-fi-btn:hover {
+    border-color: rgba(100, 150, 255, 0.4);
+    box-shadow: 0 0 20px rgba(100, 150, 255, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  .mood-tag:hover {
+    transform: none;
+    border-color: rgba(100, 150, 255, 0.2);
+    box-shadow: none;
+  }
+
+  /* 活动状态反馈 */
+  .sci-fi-btn:active {
+    transform: scale(0.97);
+    border-color: rgba(150, 200, 255, 0.8);
+  }
+
+  .mood-tag:active {
+    transform: scale(0.95);
+    background: rgba(100, 150, 255, 0.2);
+  }
+}
+
+/* 小屏幕适配 */
+@media (max-width: 380px) {
+  html {
+    font-size: 14px;
+  }
+
+  .glass-card {
+    padding: 0.75rem;
+  }
+}
+
+/* 大屏幕适配 (平板横屏/桌面) */
+@media (min-width: 768px) {
+  .glass-card {
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+/* 超大屏幕适配 */
+@media (min-width: 1024px) {
+  body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  #root {
+    width: 100%;
+    max-width: 480px;
+    min-height: 100vh;
+    min-height: 100dvh;
+    box-shadow: 0 0 100px rgba(100, 150, 255, 0.1);
+  }
+}
+
+/* 横屏模式提示 */
+@media (orientation: landscape) and (max-height: 500px) {
+  .landscape-warning {
+    display: flex;
+  }
+}
+
+/* 打印隐藏 */
+@media print {
+  .no-print { display: none; }
+}
+
+/* ==================== 动画性能优化 ==================== */
+
+/* 减少动画 - 尊重用户偏好 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* 强制GPU加速 */
+.gpu-accelerate {
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+/* ==================== 暗色模式强化 ==================== */
+
+/* 确保在所有系统暗色模式下正确显示 */
+@media (prefers-color-scheme: dark) {
+  body {
+    color-scheme: dark;
+  }
+}
+
+/* ==================== 浮动气泡触摸优化 ==================== */
+
+.bubble-container {
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.mood-bubble {
+  touch-action: manipulation;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.mood-bubble:active {
+  transform: scale(1.15);
+}
+
+/* ==================== 翻转卡片触摸优化 ==================== */
+
+.flip-card {
+  perspective: 1000px;
+  touch-action: manipulation;
+}
+
+.flip-card-inner {
+  transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.flip-card-front,
+.flip-card-back {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
