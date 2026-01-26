@@ -9,6 +9,7 @@ interface EchoResultProps {
 export function EchoResult({ echo, onReset }: EchoResultProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [isFlipped, setIsFlipped] = useState(false);
 
   const handleShare = async () => {
     if (navigator.share) {
@@ -21,76 +22,159 @@ export function EchoResult({ echo, onReset }: EchoResultProps) {
         // 用户取消分享
       }
     } else {
-      // 复制到剪贴板
       await navigator.clipboard.writeText(echo.story);
-      alert('故事已复制到剪贴板');
     }
   };
 
-  const handleDownloadImage = () => {
-    const link = document.createElement('a');
-    link.href = echo.imageUrl;
-    link.download = `echo-${Date.now()}.jpg`;
-    link.target = '_blank';
-    link.click();
-  };
-
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6">
       {/* 标题 */}
-      <div className="text-center space-y-2">
-        <h2 className="text-2xl font-medium text-purple-200">
-          ✨ 宇宙的回响
-        </h2>
-        <p className="text-sm text-gray-400">
-          生成于 {echo.generatedAt.toLocaleTimeString('zh-CN')}
-        </p>
+      <div className="text-center space-y-1">
+        <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30">
+          <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+          <span className="text-xs text-cyan-300 font-mono tracking-wider uppercase">Echo Received</span>
+        </div>
       </div>
 
-      {/* 图片 */}
-      <div className="relative aspect-[4/3] rounded-2xl overflow-hidden glass-card">
-        {!imageLoaded && !imageError && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-purple-900/50 to-indigo-900/50">
-            <div className="flex flex-col items-center gap-3">
-              <div className="w-10 h-10 border-3 border-purple-400 border-t-transparent rounded-full animate-spin" />
-              <span className="text-sm text-gray-400">画面显现中...</span>
-            </div>
-          </div>
-        )}
-        {imageError ? (
-          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-purple-900/50 to-indigo-900/50">
-            <div className="text-center space-y-2">
-              <span className="text-4xl">🌌</span>
-              <p className="text-sm text-gray-400">图像在星际中迷失了...</p>
-            </div>
-          </div>
-        ) : (
-          <img
-            src={echo.imageUrl}
-            alt="宇宙的回响"
-            className={`w-full h-full object-cover transition-opacity duration-500 ${
-              imageLoaded ? 'opacity-100' : 'opacity-0'
-            }`}
-            onLoad={() => setImageLoaded(true)}
-            onError={() => setImageError(true)}
-          />
-        )}
-      </div>
+      {/* 翻转卡片容器 */}
+      <div
+        className="relative aspect-[3/4] cursor-pointer perspective-1000"
+        onClick={() => setIsFlipped(!isFlipped)}
+        style={{ perspective: '1000px' }}
+      >
+        <div
+          className={`relative w-full h-full transition-transform duration-700 transform-style-3d ${
+            isFlipped ? 'rotate-y-180' : ''
+          }`}
+          style={{
+            transformStyle: 'preserve-3d',
+            transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+          }}
+        >
+          {/* 正面 - 图片 */}
+          <div
+            className="absolute inset-0 backface-hidden rounded-2xl overflow-hidden"
+            style={{ backfaceVisibility: 'hidden' }}
+          >
+            <div className="relative w-full h-full glass-card">
+              {/* 加载状态 */}
+              {!imageLoaded && !imageError && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800">
+                  <div className="relative w-16 h-16">
+                    <div className="absolute inset-0 rounded-full border-2 border-cyan-500/30" />
+                    <div className="absolute inset-0 rounded-full border-2 border-t-cyan-400 animate-spin" />
+                  </div>
+                  <span className="mt-4 text-sm text-gray-400 font-mono">LOADING IMAGE...</span>
+                </div>
+              )}
 
-      {/* 故事 */}
-      <div className="glass-card rounded-2xl p-6">
-        <div className="prose prose-invert max-w-none">
-          {echo.story.split('\n\n').map((paragraph, index) => (
-            <p
-              key={index}
-              className="text-gray-200 leading-relaxed mb-4 last:mb-0"
-              style={{
-                animationDelay: `${index * 0.2}s`,
-              }}
-            >
-              {paragraph}
-            </p>
-          ))}
+              {/* 错误状态 */}
+              {imageError && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800">
+                  <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center">
+                    <span className="text-2xl">!</span>
+                  </div>
+                  <span className="mt-4 text-sm text-gray-400">Signal Lost</span>
+                </div>
+              )}
+
+              {/* 图片 */}
+              {!imageError && (
+                <img
+                  src={echo.imageUrl}
+                  alt="宇宙的回响"
+                  className={`w-full h-full object-cover transition-opacity duration-500 ${
+                    imageLoaded ? 'opacity-100' : 'opacity-0'
+                  }`}
+                  onLoad={() => setImageLoaded(true)}
+                  onError={() => setImageError(true)}
+                />
+              )}
+
+              {/* 图片叠加层 */}
+              {imageLoaded && (
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent">
+                  {/* 点击提示 */}
+                  <div className="absolute bottom-4 left-0 right-0 flex justify-center">
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-black/50 backdrop-blur-sm border border-white/10">
+                      <span className="text-xs text-gray-300 font-mono">TAP TO REVEAL STORY</span>
+                      <span className="animate-bounce">↻</span>
+                    </div>
+                  </div>
+
+                  {/* 扫描线效果 */}
+                  <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                    <div
+                      className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent"
+                      style={{
+                        animation: 'scan-line 3s linear infinite',
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* 边框装饰 */}
+              <div className="absolute top-2 left-2 w-6 h-6 border-l-2 border-t-2 border-cyan-400/50" />
+              <div className="absolute top-2 right-2 w-6 h-6 border-r-2 border-t-2 border-cyan-400/50" />
+              <div className="absolute bottom-2 left-2 w-6 h-6 border-l-2 border-b-2 border-cyan-400/50" />
+              <div className="absolute bottom-2 right-2 w-6 h-6 border-r-2 border-b-2 border-cyan-400/50" />
+            </div>
+          </div>
+
+          {/* 背面 - 故事 */}
+          <div
+            className="absolute inset-0 backface-hidden rounded-2xl overflow-hidden"
+            style={{
+              backfaceVisibility: 'hidden',
+              transform: 'rotateY(180deg)',
+            }}
+          >
+            <div className="relative w-full h-full glass-card p-6 overflow-y-auto">
+              {/* 背景装饰 */}
+              <div className="absolute inset-0 data-bg opacity-30" />
+
+              {/* 故事内容 */}
+              <div className="relative z-10">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-2 h-2 rounded-full bg-cyan-400" />
+                  <span className="text-xs text-cyan-400 font-mono tracking-wider uppercase">Cosmic Message</span>
+                </div>
+
+                <div className="space-y-4">
+                  {echo.story.split('\n\n').map((paragraph, index) => (
+                    <p
+                      key={index}
+                      className="text-gray-200 text-sm leading-relaxed"
+                    >
+                      {paragraph}
+                    </p>
+                  ))}
+                </div>
+
+                {/* 时间戳 */}
+                <div className="mt-6 pt-4 border-t border-gray-700/50">
+                  <div className="flex items-center justify-between text-xs text-gray-500 font-mono">
+                    <span>TIMESTAMP</span>
+                    <span>{echo.generatedAt.toLocaleString('zh-CN')}</span>
+                  </div>
+                </div>
+
+                {/* 点击提示 */}
+                <div className="mt-4 flex justify-center">
+                  <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10">
+                    <span className="text-xs text-gray-400">TAP TO VIEW IMAGE</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 边框装饰 */}
+              <div className="absolute top-2 left-2 w-6 h-6 border-l-2 border-t-2 border-cyan-400/50" />
+              <div className="absolute top-2 right-2 w-6 h-6 border-r-2 border-t-2 border-cyan-400/50" />
+              <div className="absolute bottom-2 left-2 w-6 h-6 border-l-2 border-b-2 border-cyan-400/50" />
+              <div className="absolute bottom-2 right-2 w-6 h-6 border-r-2 border-b-2 border-cyan-400/50" />
+            </div>
+          </div>
         </div>
       </div>
 
@@ -98,24 +182,17 @@ export function EchoResult({ echo, onReset }: EchoResultProps) {
       <div className="flex gap-3">
         <button
           onClick={handleShare}
-          className="flex-1 py-3 px-4 rounded-xl bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center justify-center gap-2"
+          className="flex-1 py-3 px-4 rounded-xl glass-card text-gray-300 hover:text-white transition-colors flex items-center justify-center gap-2 text-sm font-mono"
         >
-          <span>📤</span>
-          <span>分享</span>
-        </button>
-        <button
-          onClick={handleDownloadImage}
-          className="flex-1 py-3 px-4 rounded-xl bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10 hover:text-white transition-colors flex items-center justify-center gap-2"
-        >
-          <span>💾</span>
-          <span>保存图片</span>
+          <span>↗</span>
+          <span>SHARE</span>
         </button>
         <button
           onClick={onReset}
-          className="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-purple-600/50 to-indigo-600/50 border border-purple-400/30 text-white hover:from-purple-600/70 hover:to-indigo-600/70 transition-colors flex items-center justify-center gap-2"
+          className="flex-1 py-3 px-4 rounded-xl sci-fi-btn text-cyan-100 flex items-center justify-center gap-2 text-sm font-mono"
         >
-          <span>🔄</span>
-          <span>再次回响</span>
+          <span>↻</span>
+          <span>NEW ECHO</span>
         </button>
       </div>
     </div>

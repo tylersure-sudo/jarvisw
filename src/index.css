@@ -9,50 +9,57 @@
 body {
   min-height: 100vh;
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: #030208;
 }
 
-/* 自定义宇宙主题渐变 */
+/* 深空背景 - 作为备用 */
 .cosmic-gradient {
-  background: linear-gradient(135deg, #0c0a1d 0%, #1a1333 25%, #2d1b4e 50%, #1a1333 75%, #0c0a1d 100%);
+  background: radial-gradient(ellipse at center, #0a0515 0%, #030208 100%);
 }
 
-/* 星空背景动画 */
-@keyframes twinkle {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 1; }
-}
-
+/* 科幻动画 */
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
+  50% { transform: translateY(-8px); }
 }
 
 @keyframes pulse-glow {
   0%, 100% {
-    box-shadow: 0 0 20px rgba(147, 112, 219, 0.4),
-                0 0 40px rgba(147, 112, 219, 0.2),
-                0 0 60px rgba(147, 112, 219, 0.1);
+    box-shadow: 0 0 20px rgba(100, 150, 255, 0.3),
+                0 0 40px rgba(100, 150, 255, 0.15),
+                0 0 60px rgba(100, 150, 255, 0.05);
   }
   50% {
-    box-shadow: 0 0 30px rgba(147, 112, 219, 0.6),
-                0 0 60px rgba(147, 112, 219, 0.4),
-                0 0 90px rgba(147, 112, 219, 0.2);
+    box-shadow: 0 0 30px rgba(100, 150, 255, 0.5),
+                0 0 60px rgba(100, 150, 255, 0.25),
+                0 0 90px rgba(100, 150, 255, 0.1);
   }
 }
 
-@keyframes ripple {
-  0% {
-    transform: scale(1);
-    opacity: 1;
+@keyframes scan-line {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+
+@keyframes hologram-flicker {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.95; }
+  52% { opacity: 0.85; }
+  54% { opacity: 1; }
+}
+
+@keyframes border-glow {
+  0%, 100% {
+    border-color: rgba(100, 150, 255, 0.3);
   }
-  100% {
-    transform: scale(2);
-    opacity: 0;
+  50% {
+    border-color: rgba(100, 150, 255, 0.6);
   }
 }
 
-.animate-twinkle {
-  animation: twinkle 3s ease-in-out infinite;
+@keyframes data-stream {
+  0% { background-position: 0% 0%; }
+  100% { background-position: 100% 100%; }
 }
 
 .animate-float {
@@ -60,48 +67,188 @@ body {
 }
 
 .animate-pulse-glow {
-  animation: pulse-glow 2s ease-in-out infinite;
+  animation: pulse-glow 3s ease-in-out infinite;
 }
 
-.animate-ripple {
-  animation: ripple 1.5s ease-out infinite;
+.animate-hologram {
+  animation: hologram-flicker 4s ease-in-out infinite;
 }
 
-/* 玻璃态效果 */
+.animate-border-glow {
+  animation: border-glow 2s ease-in-out infinite;
+}
+
+/* 科幻玻璃卡片 */
 .glass-card {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(
+    135deg,
+    rgba(20, 30, 60, 0.4) 0%,
+    rgba(10, 20, 40, 0.6) 100%
+  );
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(100, 150, 255, 0.15);
+  box-shadow:
+    0 4px 30px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 0 40px rgba(100, 150, 255, 0.05);
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(100, 150, 255, 0.4) 50%,
+    transparent 100%
+  );
+}
+
+/* 扫描线效果 */
+.scan-effect::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(100, 200, 255, 0.5) 50%,
+    transparent 100%
+  );
+  animation: scan-line 3s linear infinite;
+  pointer-events: none;
+}
+
+/* 全息边框 */
+.holo-border {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(135deg, rgba(20, 30, 60, 0.6), rgba(10, 20, 40, 0.8)) padding-box,
+    linear-gradient(135deg, rgba(100, 150, 255, 0.4), rgba(150, 100, 255, 0.2), rgba(100, 150, 255, 0.4)) border-box;
+}
+
+/* 霓虹文字 */
+.neon-text {
+  text-shadow:
+    0 0 10px rgba(100, 150, 255, 0.5),
+    0 0 20px rgba(100, 150, 255, 0.3),
+    0 0 30px rgba(100, 150, 255, 0.2);
+}
+
+.neon-text-purple {
+  text-shadow:
+    0 0 10px rgba(150, 100, 255, 0.5),
+    0 0 20px rgba(150, 100, 255, 0.3),
+    0 0 30px rgba(150, 100, 255, 0.2);
+}
+
+/* 数据流背景 */
+.data-bg {
+  background:
+    linear-gradient(135deg, transparent 25%, rgba(100, 150, 255, 0.03) 25%, rgba(100, 150, 255, 0.03) 50%, transparent 50%, transparent 75%, rgba(100, 150, 255, 0.03) 75%);
+  background-size: 4px 4px;
+  animation: data-stream 20s linear infinite;
 }
 
 /* 情绪标签样式 */
 .mood-tag {
   transition: all 0.3s ease;
+  border: 1px solid rgba(100, 150, 255, 0.2);
 }
 
 .mood-tag:hover {
   transform: scale(1.05);
+  border-color: rgba(100, 150, 255, 0.5);
+  box-shadow: 0 0 20px rgba(100, 150, 255, 0.2);
 }
 
 .mood-tag.selected {
-  background: linear-gradient(135deg, #9370db, #6b46c1);
-  box-shadow: 0 0 20px rgba(147, 112, 219, 0.5);
+  background: linear-gradient(135deg, rgba(100, 150, 255, 0.4), rgba(150, 100, 255, 0.4));
+  border-color: rgba(150, 200, 255, 0.5);
+  box-shadow:
+    0 0 20px rgba(100, 150, 255, 0.4),
+    inset 0 0 20px rgba(100, 150, 255, 0.1);
+}
+
+/* 科幻按钮 */
+.sci-fi-btn {
+  background: linear-gradient(
+    135deg,
+    rgba(60, 100, 180, 0.3) 0%,
+    rgba(40, 80, 160, 0.4) 100%
+  );
+  border: 1px solid rgba(100, 150, 255, 0.4);
+  box-shadow:
+    0 0 20px rgba(100, 150, 255, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.sci-fi-btn::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    45deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.1) 50%,
+    transparent 60%
+  );
+  transform: rotate(45deg);
+  transition: all 0.5s ease;
+}
+
+.sci-fi-btn:hover {
+  border-color: rgba(150, 200, 255, 0.6);
+  box-shadow:
+    0 0 30px rgba(100, 150, 255, 0.4),
+    0 0 60px rgba(100, 150, 255, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.sci-fi-btn:hover::before {
+  left: 100%;
+}
+
+.sci-fi-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 /* 滚动条美化 */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 4px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(10, 20, 40, 0.5);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(147, 112, 219, 0.5);
-  border-radius: 3px;
+  background: linear-gradient(180deg, rgba(100, 150, 255, 0.5), rgba(150, 100, 255, 0.5));
+  border-radius: 2px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(147, 112, 219, 0.7);
+  background: linear-gradient(180deg, rgba(100, 150, 255, 0.7), rgba(150, 100, 255, 0.7));
+}
+
+/* 选择高亮 */
+::selection {
+  background: rgba(100, 150, 255, 0.3);
+  color: white;
 }

@@ -9,16 +9,11 @@ import type { AppPhase, SelectedMood, EchoResponse, SpaceTimeContext, LocationIn
 import './App.css';
 
 function App() {
-  // 授权状态
   const [hasPermission, setHasPermission] = useState(false);
   const [loading, setLoading] = useState(false);
-
-  // 时空信息
   const [location, setLocation] = useState<LocationInfo | null>(null);
   const [weather, setWeather] = useState<WeatherInfo | null>(null);
   const [context, setContext] = useState<SpaceTimeContext>(() => buildSpaceTimeContext(null, null));
-
-  // 情绪和回响状态
   const [selectedMoods, setSelectedMoods] = useState<SelectedMood[]>([]);
   const [phase, setPhase] = useState<AppPhase>('collecting');
   const [progress, setProgress] = useState(0);
@@ -26,12 +21,10 @@ function App() {
 
   const progressIntervalRef = useRef<number | null>(null);
 
-  // 更新时空上下文
   useEffect(() => {
     setContext(buildSpaceTimeContext(location, weather));
   }, [location, weather]);
 
-  // 每分钟更新时间
   useEffect(() => {
     const timer = setInterval(() => {
       setContext(buildSpaceTimeContext(location, weather));
@@ -39,7 +32,6 @@ function App() {
     return () => clearInterval(timer);
   }, [location, weather]);
 
-  // 请求位置权限
   const handleRequestPermission = useCallback(async () => {
     setHasPermission(true);
     setLoading(true);
@@ -47,7 +39,6 @@ function App() {
     try {
       const loc = await getCurrentLocation();
       setLocation(loc);
-
       const weatherData = await getWeather(loc);
       setWeather(weatherData);
     } catch (error) {
@@ -63,10 +54,8 @@ function App() {
     }
   }, []);
 
-  // 是否可以点击回响按钮
   const canEcho = selectedMoods.length > 0;
 
-  // 处理回响点击
   const handleEcho = async () => {
     if (!canEcho) return;
 
@@ -103,7 +92,6 @@ function App() {
     }
   };
 
-  // 重置
   const handleReset = () => {
     setSelectedMoods([]);
     setPhase('collecting');
@@ -111,7 +99,6 @@ function App() {
     setEcho(null);
   };
 
-  // 清理
   useEffect(() => {
     return () => {
       if (progressIntervalRef.current) {
@@ -122,26 +109,31 @@ function App() {
 
   return (
     <div className="min-h-screen min-h-[100dvh] cosmic-gradient text-white relative overflow-x-hidden">
-      {/* 星空背景 */}
       <StarryBackground />
 
-      {/* 主内容 */}
       <div className="relative z-10 min-h-screen min-h-[100dvh] flex flex-col">
-        {/* 头部 */}
+        {/* 科幻标题 */}
         <header className="p-4 sm:p-6 text-center shrink-0">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-light tracking-wider animate-float">
-            <span className="text-purple-300">每日</span>
-            <span className="text-white">灵感</span>
-            <span className="text-indigo-300">回响</span>
-          </h1>
-          <p className="mt-1 sm:mt-2 text-gray-400 text-xs sm:text-sm">让宇宙聆听你此刻的心声</p>
+          <div className="inline-block relative">
+            {/* 装饰线 */}
+            <div className="absolute -left-8 top-1/2 w-6 h-px bg-gradient-to-r from-transparent to-cyan-500/50" />
+            <div className="absolute -right-8 top-1/2 w-6 h-px bg-gradient-to-l from-transparent to-cyan-500/50" />
+
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-light tracking-[0.3em] uppercase animate-float">
+              <span className="neon-text text-cyan-200">COSMIC</span>
+              <span className="text-white mx-2">·</span>
+              <span className="neon-text-purple text-purple-200">ECHO</span>
+            </h1>
+          </div>
+          <p className="mt-2 sm:mt-3 text-gray-500 text-xs sm:text-sm font-mono tracking-wider">
+            // UNIVERSAL VOICE INTERFACE v1.0
+          </p>
         </header>
 
         {/* 主体内容区 */}
         <main className="flex-1 px-3 sm:px-4 pb-4 sm:pb-8 max-w-lg mx-auto w-full space-y-4 sm:space-y-6 overflow-y-auto">
           {phase !== 'complete' || !echo ? (
             <>
-              {/* 时空信息展示 */}
               <SpaceTimeDisplay
                 context={context}
                 loading={loading}
@@ -149,13 +141,11 @@ function App() {
                 onRequestPermission={handleRequestPermission}
               />
 
-              {/* 浮动球体心情选择 */}
               <MoodBubbles
                 selectedMoods={selectedMoods}
                 onMoodsChange={setSelectedMoods}
               />
 
-              {/* 回响按钮 */}
               <div className="pt-2 sm:pt-4 pb-safe">
                 <EchoButton
                   phase={phase}
@@ -164,21 +154,23 @@ function App() {
                   progress={progress}
                 />
                 {!canEcho && (
-                  <p className="text-center text-xs sm:text-sm text-gray-500 mt-3 sm:mt-4">
-                    点击上方的心情球体，选择你此刻的感受
+                  <p className="text-center text-xs text-gray-600 mt-4 font-mono">
+                    SELECT YOUR CURRENT STATE TO CONTINUE
                   </p>
                 )}
               </div>
             </>
           ) : (
-            /* 结果展示 */
             <EchoResult echo={echo} onReset={handleReset} />
           )}
         </main>
 
         {/* 底部 */}
-        <footer className="p-3 sm:p-4 text-center text-xs text-gray-500 shrink-0">
-          <p>每一次回响，都是宇宙与你的对话</p>
+        <footer className="p-3 sm:p-4 text-center shrink-0">
+          <div className="flex items-center justify-center gap-2 text-xs text-gray-600 font-mono">
+            <div className="w-1.5 h-1.5 rounded-full bg-cyan-500/50 animate-pulse" />
+            <span>CONNECTED TO UNIVERSE</span>
+          </div>
         </footer>
       </div>
     </div>
