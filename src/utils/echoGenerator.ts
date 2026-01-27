@@ -11,8 +11,6 @@ import {
   preparePromptData,
   generateStoryPrompt,
   generateImagePrompt,
-  getElementChineseName,
-  getArchetypeInfo,
   type WisdomAnalysis,
 } from './wisdom';
 
@@ -174,9 +172,19 @@ export async function generateEcho(
   const wisdomAnalysis = getWisdomAnalysis(context, moods);
   const promptData = preparePromptData(context, moods, wisdomAnalysis);
 
-  // 添加能量块影响
-  const energyInfluence = energies.length > 0
-    ? `\n\n## 特别灵感注入\n用户在感应过程中收集了以下能量：${energies.map(e => e.label).join('、')}。\n请在故事中巧妙融入这些能量特质，让它们成为故事的一部分。`
+  // 添加能量块影响 - 转化为氛围词
+  const energyAtmosphere = energies.length > 0
+    ? `\n- 特别氛围: ${energies.map(e => {
+        const atmosphereMap: Record<string, string> = {
+          'light': '光芒穿透的明亮感',
+          'warmth': '被温柔包裹的暖意',
+          'wisdom': '沉静深邃的智性',
+          'strength': '坚定有力的生命力',
+          'peace': '波澜不惊的宁静',
+          'mystery': '朦胧神秘的梦幻',
+        };
+        return atmosphereMap[e.type] || e.label;
+      }).join('、')}`
     : '';
 
   let story: string;
@@ -187,7 +195,10 @@ export async function generateEcho(
     try {
       console.log('正在使用 Gemini 生成故事...');
       const basePrompt = generateStoryPrompt(promptData);
-      const prompt = basePrompt + energyInfluence;
+      // 如果有能量，将其插入到提示词的【隐含的时空能量】部分
+      const prompt = energyAtmosphere
+        ? basePrompt.replace('- 情绪基调:', `${energyAtmosphere}\n- 情绪基调:`)
+        : basePrompt;
 
       if (currentConfig.provider === 'gemini' && currentConfig.geminiApiKey) {
         story = await generateStoryWithGemini(prompt);
@@ -281,45 +292,58 @@ function generateLocalStory(
   context: SpaceTimeContext,
   moods: SelectedMood[]
 ): string {
-  const { iChing, sixLines, huangdi, psychology } = analysis;
-  const archetype = getArchetypeInfo(psychology.archetype);
-  const element = getElementChineseName(huangdi.dominantElement);
+  // 时间场景
+  const timeScenes: Record<string, string> = {
+    dawn: '天边泛起淡淡的粉色，第一缕晨光穿过薄雾，落在窗台上。',
+    morning: '阳光从窗帘缝隙洒进来，在地板上画出一道道金色的光带。',
+    afternoon: '午后的阳光变得柔软，影子拉得很长，空气里有慵懒的味道。',
+    evening: '天空渐渐染上橙红，最后一抹余晖温柔地照在旧物上。',
+    night: '夜色如墨，窗外星光点点，世界安静得只剩下呼吸的声音。',
+  };
 
-  const timeDesc = context.timeOfDay === 'night' ? '夜幕低垂' :
-    context.timeOfDay === 'dawn' ? '晨曦微露' :
-      context.timeOfDay === 'morning' ? '阳光正好' :
-        context.timeOfDay === 'afternoon' ? '午后时光' :
-          '暮色渐浓';
+  // 季节元素
+  const seasonElements: Record<string, string> = {
+    spring: '窗外的枝头，不知何时冒出了新绿。',
+    summer: '蝉鸣从远处传来，空气里有青草的气息。',
+    autumn: '一片落叶飘过窗前，带着些许金黄。',
+    winter: '玻璃上凝结着薄薄的霜花，勾勒出细密的纹路。',
+  };
 
-  const seasonDesc = context.season === 'spring' ? '春风轻拂' :
-    context.season === 'summer' ? '夏日炎炎' :
-      context.season === 'autumn' ? '秋意渐浓' :
-        '冬雪飘零';
+  // 五行意象
+  const elementImages: Record<string, string> = {
+    wood: '桌上的绿植轻轻摇曳，仿佛在呼应着什么。',
+    fire: '一盏暖灯亮着，光晕在墙上晕开柔和的圆。',
+    earth: '手边的陶杯温热，杯中茶叶缓缓沉淀。',
+    metal: '窗外月光如水，在地上铺开一层银白。',
+    water: '雨滴顺着玻璃滑落，汇成细细的水流。',
+  };
 
-  let moodDesc = '平静如水';
+  // 情绪氛围
+  let moodAtmosphere = '你静静地坐着，感受着这一刻的宁静。';
   if (moods.length > 0) {
     const primary = moods[0].mood;
-    moodDesc = `${primary.emoji} ${primary.label}`;
+    if (primary.category === 'positive') {
+      moodAtmosphere = '心里涌起一股莫名的温暖，嘴角不自觉地上扬。';
+    } else if (primary.category === 'negative') {
+      moodAtmosphere = '思绪像水一样流淌，带着淡淡的忧伤，却也有奇异的平静。';
+    }
   }
 
-  const weatherDesc = context.weather?.description || '天气变幻';
+  // 结尾意象
+  const endings = [
+    '远处传来一声鸟鸣，然后一切又归于寂静。',
+    '风轻轻掀起书页，又轻轻放下。',
+    '时间仿佛在这一刻停住了，只有光影在缓缓移动。',
+    '你深吸一口气，感受着此刻的存在。',
+    '某个角落里，有什么在悄悄生长。',
+  ];
 
-  let story = `${timeDesc}，${seasonDesc}的${context.location?.city || '这座城市'}，${weatherDesc}。`;
-  story += `你正感受着「${moodDesc}」的情绪波动。\n\n`;
-  story += `宇宙为你呈现了「${iChing.hexagram.name}」的卦象——${iChing.hexagram.image}\n\n`;
-  story += `${iChing.hexagram.meaning}\n\n`;
-  story += `此刻，${element}气在你的能量场中流转。`;
-  const emotionPart = huangdi.emotionAdvice.split('\n\n')[0];
-  if (emotionPart) {
-    story += emotionPart.replace(/从情志角度来看，[^。]+。/, '');
-  }
-  story += '\n\n';
-  story += `你的内心深处，住着一位「${archetype.chineseName}」——${archetype.description}\n\n`;
-  story += `${sixLines.shortTerm}\n\n`;
-  story += `来自宇宙的声音轻轻说道：\n"${iChing.guidance}"\n\n`;
-  story += `✨ ${psychology.affirmation}`;
+  const timeScene = timeScenes[context.timeOfDay] || timeScenes.afternoon;
+  const seasonElement = seasonElements[context.season] || seasonElements.autumn;
+  const elementImage = elementImages[analysis.huangdi.dominantElement] || elementImages.earth;
+  const ending = endings[Math.floor(Math.random() * endings.length)];
 
-  return story;
+  return `${timeScene}${seasonElement}\n\n${elementImage}${moodAtmosphere}\n\n${ending}`;
 }
 
 function getPlaceholderImage(
@@ -327,46 +351,50 @@ function getPlaceholderImage(
   context: SpaceTimeContext,
   moods: SelectedMood[]
 ): string {
-  const keywords: string[] = [];
-
-  const timeKeywords: Record<string, string> = {
-    dawn: 'sunrise,dawn',
-    morning: 'morning,sunlight',
-    afternoon: 'golden-hour',
-    evening: 'sunset,dusk',
-    night: 'night,stars,moon',
-  };
-  keywords.push(timeKeywords[context.timeOfDay] || 'sky');
-
-  const seasonKeywords: Record<string, string> = {
-    spring: 'spring,flowers',
-    summer: 'summer,warm',
-    autumn: 'autumn,leaves',
-    winter: 'winter,snow',
-  };
-  keywords.push(seasonKeywords[context.season] || 'nature');
-
+  // 五行对应的视觉关键词
   const elementKeywords: Record<string, string> = {
-    wood: 'forest,green',
-    fire: 'fire,warmth',
-    earth: 'mountain,earth',
-    metal: 'crystal,silver',
-    water: 'water,ocean',
+    wood: 'bamboo,forest,green-leaves,nature',
+    fire: 'warm-light,golden-hour,sunset,amber',
+    earth: 'mountains,stones,earth-tones,landscape',
+    metal: 'moonlight,silver,minimal,misty',
+    water: 'water,rain,reflection,deep-blue',
   };
-  keywords.push(elementKeywords[analysis.huangdi.dominantElement] || 'cosmic');
 
+  // 时间对应的光线关键词
+  const timeKeywords: Record<string, string> = {
+    dawn: 'sunrise,dawn,pink-sky,morning-light',
+    morning: 'bright,fresh,clear-sky,morning',
+    afternoon: 'golden-hour,warm-light,afternoon',
+    evening: 'sunset,twilight,purple-sky,dusk',
+    night: 'night,stars,moon,dark-blue',
+  };
+
+  // 季节对应的氛围关键词
+  const seasonKeywords: Record<string, string> = {
+    spring: 'spring,blossoms,fresh,renewal',
+    summer: 'summer,lush,vibrant,green',
+    autumn: 'autumn,fall-leaves,warm-colors,harvest',
+    winter: 'winter,frost,minimal,serene',
+  };
+
+  // 情绪对应的风格关键词
+  let moodKeyword = 'peaceful,calm';
   if (moods.length > 0) {
-    const primaryMood = moods[0].mood;
-    if (primaryMood.category === 'positive') {
-      keywords.push('peaceful,serene');
-    } else if (primaryMood.category === 'negative') {
-      keywords.push('contemplative,moody');
-    } else {
-      keywords.push('calm,minimal');
+    const primary = moods[0].mood;
+    if (primary.category === 'positive') {
+      moodKeyword = 'joyful,bright,warm';
+    } else if (primary.category === 'negative') {
+      moodKeyword = 'contemplative,moody,quiet';
     }
   }
 
-  keywords.push('spiritual,meditation');
+  const keywords = [
+    elementKeywords[analysis.huangdi.dominantElement] || 'nature',
+    timeKeywords[context.timeOfDay] || 'sky',
+    seasonKeywords[context.season] || 'landscape',
+    moodKeyword,
+    'artistic,aesthetic,dreamy',
+  ];
 
   return `https://source.unsplash.com/800x1200/?${keywords.join(',')}`;
 }
