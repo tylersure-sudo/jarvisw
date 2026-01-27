@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a1025"/>
+      <stop offset="50%" stop-color="#0f0a18"/>
+      <stop offset="100%" stop-color="#030208"/>
+    </linearGradient>
+    <linearGradient id="ring1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a78bfa"/>
+      <stop offset="100%" stop-color="#6d28d9"/>
+    </linearGradient>
+    <linearGradient id="ring2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#c4b5fd"/>
+      <stop offset="100%" stop-color="#8b5cf6"/>
+    </linearGradient>
+    <linearGradient id="core" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef3c7"/>
+      <stop offset="50%" stop-color="#fcd34d"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="512" height="512" rx="96" fill="url(#bg)"/>
+
+  <!-- Stars -->
+  <circle cx="80" cy="100" r="2" fill="white" opacity="0.6"/>
+  <circle cx="420" cy="80" r="1.5" fill="white" opacity="0.5"/>
+  <circle cx="100" cy="400" r="2" fill="white" opacity="0.4"/>
+  <circle cx="400" cy="420" r="1.5" fill="white" opacity="0.5"/>
+  <circle cx="150" cy="200" r="1" fill="white" opacity="0.3"/>
+  <circle cx="380" cy="300" r="1.5" fill="white" opacity="0.4"/>
+  <circle cx="60" cy="280" r="1" fill="white" opacity="0.3"/>
+  <circle cx="450" cy="200" r="1" fill="white" opacity="0.4"/>
+
+  <!-- Outer ring -->
+  <ellipse cx="256" cy="256" rx="160" ry="50" fill="none" stroke="url(#ring1)" stroke-width="3" opacity="0.4" transform="rotate(-25 256 256)"/>
+
+  <!-- Middle ring -->
+  <ellipse cx="256" cy="256" rx="120" ry="35" fill="none" stroke="url(#ring2)" stroke-width="2" opacity="0.5" transform="rotate(20 256 256)"/>
+
+  <!-- Inner ring -->
+  <ellipse cx="256" cy="256" rx="80" ry="22" fill="none" stroke="#ddd6fe" stroke-width="1.5" opacity="0.4" transform="rotate(-10 256 256)"/>
+
+  <!-- Core glow -->
+  <circle cx="256" cy="256" r="60" fill="url(#core)" opacity="0.2" filter="url(#glow)"/>
+
+  <!-- Core -->
+  <circle cx="256" cy="256" r="45" fill="url(#core)" filter="url(#glow)"/>
+
+  <!-- Core highlight -->
+  <circle cx="240" cy="240" r="15" fill="white" opacity="0.4"/>
+  <circle cx="270" cy="265" r="6" fill="white" opacity="0.2"/>
+</svg>
