@@ -1,22 +1,22 @@
 import { useState, useEffect, useCallback } from 'react';
-import { StarryBackground, CallUniverse, ConversationScreen, SpaceTimeDisplay } from './components';
+import { StarryBackground, CallUniverse, ConversationScreen } from './components';
 import type { CallMode } from './components';
 import type { EnergyBlock } from './components/EnergyBlocks';
 import { generateEcho } from './utils/echoGenerator';
 import { getCurrentLocation } from './utils/location';
 import { getWeather } from './utils/weather';
 import { buildSpaceTimeContext } from './utils/time';
+import { getShiChen, getSolarTerm, getLunarDateDisplay } from './utils/easternTime';
 import type { SpaceTimeContext, LocationInfo, WeatherInfo } from './types';
 import './App.css';
 
 function App() {
-  const [hasPermission, setHasPermission] = useState(false);
+  const [spaceTimeReady, setSpaceTimeReady] = useState(false);
   const [loading, setLoading] = useState(false);
   const [location, setLocation] = useState<LocationInfo | null>(null);
   const [weather, setWeather] = useState<WeatherInfo | null>(null);
   const [context, setContext] = useState<SpaceTimeContext>(() => buildSpaceTimeContext(null, null));
   const [activeMode, setActiveMode] = useState<CallMode | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
 
   // 更新时空上下文
   useEffect(() => {
@@ -31,17 +31,17 @@ function App() {
     return () => clearInterval(timer);
   }, [location, weather]);
 
-  // 请求位置权限
-  const handleRequestPermission = useCallback(async () => {
-    setHasPermission(true);
-    setLoading(true);
+  // 获取时空信息
+  const handleGetSpaceTime = useCallback(async () => {
+    if (spaceTimeReady || loading) return;
 
+    setLoading(true);
     try {
       const loc = await getCurrentLocation();
       setLocation(loc);
       const weatherData = await getWeather(loc);
       setWeather(weatherData);
-      setIsConnected(true);
+      setSpaceTimeReady(true);
     } catch (error) {
       console.error('获取位置或天气失败:', error);
       setLocation({
@@ -50,18 +50,11 @@ function App() {
         city: '未知城市',
         country: '未知国家',
       });
-      setIsConnected(true);
+      setSpaceTimeReady(true);
     } finally {
       setLoading(false);
     }
-  }, []);
-
-  // 自动请求权限
-  useEffect(() => {
-    if (!hasPermission) {
-      handleRequestPermission();
-    }
-  }, [hasPermission, handleRequestPermission]);
+  }, [spaceTimeReady, loading]);
 
   // 开始呼叫
   const handleStartCall = (mode: CallMode) => {
@@ -79,7 +72,6 @@ function App() {
     mode: CallMode,
     energies: EnergyBlock[]
   ): Promise<{ story: string; imageUrl?: string }> => {
-    // 根据模式构建心情
     const moodMap: Record<CallMode, { id: string; label: string; emoji: string }> = {
       daily: { id: 'hopeful', label: '期待', emoji: '🌟' },
       mood: { id: 'peaceful', label: '平和', emoji: '🌊' },
@@ -96,7 +88,6 @@ function App() {
       customNote: userInput || undefined,
     };
 
-    // 生成回响
     const response = await generateEcho(context, [selectedMood], energies);
 
     return {
@@ -104,6 +95,11 @@ function App() {
       imageUrl: response.imageUrl,
     };
   };
+
+  // 获取时空显示信息
+  const shichen = getShiChen(context.time.getHours());
+  const solarTerm = getSolarTerm(context.time);
+  const lunarDate = getLunarDateDisplay(context.time);
 
   return (
     <div className="min-h-screen-safe bg-gradient-to-b from-gray-900 via-purple-950/20 to-gray-900 text-white relative overflow-hidden">
@@ -119,60 +115,97 @@ function App() {
       )}
 
       {/* 主界面 */}
-      <div className={`relative z-10 min-h-screen-safe flex flex-col safe-top safe-bottom transition-opacity duration-300 ${activeMode ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
-        {/* 顶部 */}
-        <header className="px-4 pt-4 pb-2 sm:px-6 sm:pt-6 text-center shrink-0">
-          {/* 装饰光晕 */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-32 bg-gradient-to-b from-purple-500/20 via-pink-500/10 to-transparent blur-3xl pointer-events-none" />
+      <div className={`relative z-10 min-h-screen-safe flex flex-col transition-opacity duration-300 ${activeMode ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
 
-          <div className="relative">
-            {/* 标题 */}
-            <h1 className="text-2xl sm:text-3xl font-medium tracking-widest relative inline-block">
-              <span className="bg-gradient-to-r from-purple-300 via-pink-300 to-amber-300 bg-clip-text text-transparent">
-                灵感回响
-              </span>
-              {/* 星星装饰 */}
-              <span className="absolute -top-1 -right-4 text-amber-300/60 text-xs animate-pulse">✦</span>
-              <span className="absolute -bottom-1 -left-3 text-purple-300/50 text-[10px] animate-pulse" style={{ animationDelay: '0.5s' }}>✧</span>
-            </h1>
+        {/* 时空信息背景展示 - 只有获取后才显示 */}
+        {spaceTimeReady && (
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            {/* 顶部时间信息 */}
+            <div className="absolute top-6 left-0 right-0 flex justify-center">
+              <div className="text-center opacity-40">
+                <div className="text-4xl sm:text-5xl font-extralight tracking-[0.3em] text-purple-200/80">
+                  {shichen.name}
+                </div>
+              </div>
+            </div>
 
-            {/* 副标题 */}
-            <p className="mt-2 text-gray-400 text-xs sm:text-sm font-light tracking-wider flex items-center justify-center gap-2">
-              <span className="w-8 h-px bg-gradient-to-r from-transparent via-gray-600 to-transparent" />
-              <span>与宇宙对话 · 聆听内心</span>
-              <span className="w-8 h-px bg-gradient-to-r from-transparent via-gray-600 to-transparent" />
-            </p>
+            {/* 左侧信息 */}
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 opacity-30">
+              <div className="writing-vertical text-sm tracking-[0.5em] text-gray-400 font-light">
+                {lunarDate}
+              </div>
+            </div>
+
+            {/* 右侧信息 */}
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-30">
+              <div className="writing-vertical text-sm tracking-[0.5em] text-gray-400 font-light">
+                {solarTerm.name}
+              </div>
+            </div>
+
+            {/* 底部位置信息 */}
+            <div className="absolute bottom-20 left-0 right-0 flex justify-center">
+              <div className="text-center opacity-30">
+                <div className="text-xs tracking-widest text-gray-500">
+                  {context.location?.city || ''}
+                </div>
+              </div>
+            </div>
           </div>
-        </header>
+        )}
 
-        {/* 时空信息 */}
-        <div className="px-4 sm:px-6 mt-2">
-          <SpaceTimeDisplay
-            context={context}
-            loading={loading}
-            hasPermission={hasPermission}
-            onRequestPermission={handleRequestPermission}
-          />
-        </div>
-
-        {/* 主呼叫区域 */}
+        {/* 中央主区域 */}
         <main className="flex-1 flex items-center justify-center px-4">
-          <CallUniverse
-            onStartCall={handleStartCall}
-            isConnected={isConnected}
-          />
-        </main>
+          {!spaceTimeReady ? (
+            /* 未获取时空信息 - 显示感应按钮 */
+            <div className="flex flex-col items-center">
+              <button
+                onClick={handleGetSpaceTime}
+                disabled={loading}
+                className="relative group"
+              >
+                {/* 外层光环 */}
+                <div className="absolute inset-[-30px] rounded-full bg-gradient-to-br from-amber-500/20 to-orange-500/20 blur-xl opacity-50 group-hover:opacity-70 transition-opacity" />
 
-        {/* 底部提示 */}
-        <footer className="px-4 py-4 sm:py-6 text-center shrink-0 safe-bottom">
-          <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-white/5 border border-white/5">
-            <span className="text-purple-400/60 text-[10px]">☯</span>
-            <p className="text-gray-500 text-[11px] tracking-wider">
-              易经智慧 · 荣格心理 · 宇宙能量
-            </p>
-            <span className="text-amber-400/60 text-[10px]">✧</span>
-          </div>
-        </footer>
+                {/* 主按钮 */}
+                <div className={`relative w-32 h-32 rounded-full bg-gradient-to-br from-amber-600/80 to-orange-700/80
+                  flex items-center justify-center shadow-2xl
+                  transition-all duration-300 group-hover:scale-105 group-active:scale-95
+                  border border-amber-400/30 overflow-hidden
+                  ${loading ? 'animate-pulse' : ''}`}
+                >
+                  {/* 光泽 */}
+                  <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent" />
+
+                  {/* 内容 */}
+                  <div className="flex flex-col items-center relative z-10">
+                    {loading ? (
+                      <div className="w-8 h-8 border-2 border-white/50 border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <svg className="w-10 h-10 text-amber-100" viewBox="0 0 24 24" fill="currentColor">
+                          <circle cx="12" cy="12" r="3" />
+                          <path d="M12 2v4m0 12v4m10-10h-4M6 12H2m15.07-7.07l-2.83 2.83M9.76 14.24l-2.83 2.83m0-10.14l2.83 2.83m4.48 4.48l2.83 2.83" stroke="currentColor" strokeWidth="1.5" fill="none" />
+                        </svg>
+                        <span className="text-amber-100 text-xs mt-2 tracking-wider">感应时空</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </button>
+
+              <p className="mt-8 text-gray-500 text-sm text-center max-w-xs font-light">
+                {loading ? '正在感应天地能量...' : '轻触开启时空感应'}
+              </p>
+            </div>
+          ) : (
+            /* 已获取时空信息 - 显示呼叫宇宙 */
+            <CallUniverse
+              onStartCall={handleStartCall}
+              isConnected={true}
+            />
+          )}
+        </main>
       </div>
     </div>
   );

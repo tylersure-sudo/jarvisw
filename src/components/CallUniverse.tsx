@@ -103,53 +103,10 @@ export function CallUniverse({ onStartCall, isConnected }: CallUniverseProps) {
             />
           </div>
 
-          {/* 提示文字 */}
-          <div className="mt-10 text-center max-w-xs">
-            <p className="text-gray-400 text-sm font-light tracking-wide flex items-center justify-center gap-2">
-              <span className="w-6 h-px bg-gradient-to-r from-transparent to-purple-500/30" />
-              轻触按钮，开启神秘对话
-              <span className="w-6 h-px bg-gradient-to-l from-transparent to-purple-500/30" />
-            </p>
-            <p className="mt-2 text-gray-600 text-xs">
-              宇宙正在聆听你的声音
-            </p>
-          </div>
-
-          {/* 装饰星星 */}
-          <div className="absolute inset-0 pointer-events-none overflow-hidden">
-            {[...Array(20)].map((_, i) => (
-              <div
-                key={i}
-                className="absolute w-1 h-1 bg-white rounded-full animate-pulse"
-                style={{
-                  left: `${Math.random() * 100}%`,
-                  top: `${Math.random() * 100}%`,
-                  opacity: 0.2 + Math.random() * 0.3,
-                  animationDelay: `${i * 0.15}s`,
-                  animationDuration: `${2 + Math.random() * 2}s`,
-                }}
-              />
-            ))}
-          </div>
         </div>
       ) : (
         /* 模式选择 */
         <div className="w-full max-w-md animate-fadeIn">
-          {/* 标题区 */}
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 mb-3">
-              <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
-              <span className="text-purple-300 text-xs tracking-wider">宇宙已连接</span>
-            </div>
-            <h3 className="text-xl font-medium text-white tracking-wide">
-              选择对话方式
-            </h3>
-            <p className="text-gray-500 text-sm mt-2 flex items-center justify-center gap-2">
-              <span className="text-purple-400/50">✦</span>
-              你想和宇宙聊些什么
-              <span className="text-amber-400/50">✦</span>
-            </p>
-          </div>
 
           <div className="grid grid-cols-2 gap-4 px-2">
             {CALL_MODES.map((mode) => (
@@ -168,14 +125,9 @@ export function CallUniverse({ onStartCall, isConnected }: CallUniverseProps) {
           {/* 返回按钮 */}
           <button
             onClick={() => setShowModes(false)}
-            className="w-full mt-8 py-3 rounded-2xl bg-white/5 border border-white/10 text-gray-400 text-sm
-              hover:bg-white/10 hover:text-gray-200 hover:border-white/20 transition-all
-              flex items-center justify-center gap-2 group"
+            className="w-full mt-6 py-2 text-gray-500 text-xs hover:text-gray-300 transition-colors"
           >
-            <svg className="w-4 h-4 transform group-hover:-translate-x-1 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M15 18l-6-6 6-6" />
-            </svg>
-            <span>收起选项</span>
+            收起
           </button>
         </div>
       )}

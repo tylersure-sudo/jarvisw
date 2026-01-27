@@ -82,3 +82,9 @@
 #root {
   min-height: 100vh;
 }
+
+/* 竖排文字 */
+.writing-vertical {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+}
