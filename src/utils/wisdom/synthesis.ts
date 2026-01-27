@@ -235,12 +235,51 @@ export function preparePromptData(
   moods: SelectedMood[],
   analysis: WisdomAnalysis
 ): PromptData {
+  // 时间氛围映射
+  const timeAtmosphere: Record<string, string> = {
+    dawn: '晨曦微露的清澈',
+    morning: '阳光温柔的明朗',
+    afternoon: '午后慵懒的温暖',
+    evening: '黄昏柔软的余晖',
+    night: '深夜静谧的神秘',
+  };
+
+  // 季节气息映射
+  const seasonFeeling: Record<string, string> = {
+    spring: '春天萌动的生机',
+    summer: '夏日热烈的奔放',
+    autumn: '秋意沉淀的从容',
+    winter: '冬雪内敛的宁静',
+  };
+
+  // 情绪基调
+  let moodTone = '平静如水';
+  let moodVisual = 'serene, calm';
+  if (moods.length > 0) {
+    const primary = moods[0].mood;
+    if (primary.category === 'positive') {
+      moodTone = primary.intensity === 'strong' ? '光芒四射的喜悦' : '温暖轻柔的愉悦';
+      moodVisual = 'warm, joyful, radiant light';
+    } else if (primary.category === 'negative') {
+      moodTone = primary.intensity === 'strong' ? '深沉内省的蜕变' : '细雨轻愁的沉思';
+      moodVisual = 'contemplative, moody, soft shadows';
+    } else {
+      moodTone = '波澜不惊的平衡';
+      moodVisual = 'balanced, peaceful, neutral tones';
+    }
+  }
+
   const userContext = {
     time: `${getTimeOfDayLabel(context.timeOfDay)} (${context.time.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })})`,
     season: getSeasonLabel(context.season),
     weather: context.weather?.description || '未知',
     location: context.location?.city || '某个角落',
     moods: moods.map((m) => `${m.mood.emoji} ${m.mood.label}`),
+    // 新增：用于画面描述的氛围词
+    timeAtmosphere: timeAtmosphere[context.timeOfDay] || '时光流转的瞬间',
+    seasonFeeling: seasonFeeling[context.season] || '季节更迭的痕迹',
+    moodTone,
+    moodVisual,
   };
 
   const culturalReferences = {
@@ -259,101 +298,98 @@ export function preparePromptData(
   };
 }
 
-/** 生成故事提示词 */
+/** 生成故事提示词 - 画面描述风格 */
 export function generateStoryPrompt(data: PromptData): string {
-  return `你是一位融合东西方智慧的灵性向导。请基于以下信息，为用户创作一段温暖而有深度的个人化故事（300-500字）。
+  return `你是一位诗意的画面描述者。请基于以下隐含的时空能量，创作一个简短的、富有画面感的场景描述。
 
-## 用户当前状态
-- 时间：${data.userContext.time}
-- 季节：${data.userContext.season}
-- 天气：${data.userContext.weather}
-- 位置：${data.userContext.location}
-- 此刻心情：${data.userContext.moods.join('、')}
+【隐含的时空能量】
+这些信息不要在文字中直接提及，而是让它们自然地影响场景的氛围和意境：
+- 时间氛围: ${data.userContext.timeAtmosphere}
+- 季节气息: ${data.userContext.seasonFeeling}
+- 天气触感: ${data.userContext.weather}
+- 情绪基调: ${data.userContext.moodTone}
 
-## 文化智慧背景
-### 易经
-- 卦象：${data.culturalReferences.hexagramName}
-- 含义：${data.culturalReferences.hexagramMeaning}
+【创作要求】
+1. 描绘一个具体的、静止的画面场景（像一幅画的文字说明）
+2. 包含：一个主体（可以是人、物、或自然元素）、一个环境、一种光线、一种情绪
+3. 用感官细节：看到什么颜色、听到什么声音、感受到什么温度
+4. 100-150字，简洁而富有意境
+5. 不要说教，不要解读，不要提及易经、五行等概念，只描绘画面
+6. 结尾留一个意象或细微的动作，有余韵
+7. 用第二人称"你"来写，让读者有身临其境的感觉
 
-### 五行
-- 主导元素：${data.culturalReferences.dominantElement}
-- 建议：${data.culturalReferences.elementAdvice}
-
-### 心理原型
-- 原型：${data.culturalReferences.archetype}
-- 描述：${data.culturalReferences.archetypeDescription}
-
-## 创作要求
-1. 以第二人称"你"来写，让读者有沉浸感
-2. 巧妙融入以上文化元素，但不要生硬罗列
-3. 故事要有诗意和画面感，像是来自宇宙的轻声细语
-4. 结尾给予温暖的力量和希望
-5. 语言风格：温柔、深邃、富有哲理
-6. 避免说教，通过意象和隐喻传达智慧
-
-## 综合主题
-${data.wisdomAnalysis.synthesis.theme}
-
-请创作故事：`;
+【输出】
+直接输出画面描述，不要任何前缀、标题或解释。`;
 }
 
-/** 生成图片提示词 */
+/** 生成图片提示词 - 基于画面描述 */
 export function generateImagePrompt(data: PromptData): string {
   const { userContext, culturalReferences, wisdomAnalysis } = data;
 
-  // 基于文化元素构建视觉意象
-  const elementVisuals: Record<string, string> = {
-    '木': 'ancient forest, green energy, growing trees, spring vitality',
-    '火': 'warm golden light, sunrise, flames, passionate energy',
-    '土': 'mountains, earth tones, grounded landscape, nurturing nature',
-    '金': 'silver moonlight, autumn leaves, crystalline structures, clarity',
-    '水': 'flowing water, deep ocean, starry reflection, mysterious depth',
+  // 五行对应的视觉风格
+  const elementStyles: Record<string, { palette: string; elements: string; style: string }> = {
+    '木': {
+      palette: 'emerald green, sage, fresh mint, warm wood tones',
+      elements: 'bamboo, leaves, growing plants, forest light',
+      style: 'organic, flowing, natural',
+    },
+    '火': {
+      palette: 'warm amber, golden orange, soft coral, candlelight yellow',
+      elements: 'warm glow, sunrise colors, gentle flames, lantern light',
+      style: 'warm, radiant, inviting',
+    },
+    '土': {
+      palette: 'earthy ochre, warm beige, terracotta, soft brown',
+      elements: 'mountains, stones, pottery, grounded landscape',
+      style: 'stable, nurturing, grounded',
+    },
+    '金': {
+      palette: 'silver white, pale gold, cream, misty gray',
+      elements: 'moonlight, autumn mist, delicate metal, crystal clarity',
+      style: 'refined, elegant, minimal',
+    },
+    '水': {
+      palette: 'deep indigo, midnight blue, soft teal, pearl gray',
+      elements: 'still water, rain drops, flowing streams, starry reflection',
+      style: 'mysterious, deep, fluid',
+    },
   };
 
-  const archetypeVisuals: Record<string, string> = {
-    '英雄': 'heroic figure, dawn light, mountain peak',
-    '导师': 'wise sage, ancient library, glowing wisdom',
-    '探索者': 'vast horizon, unknown path, adventure calling',
-    '反叛者': 'breaking chains, transformation, phoenix rising',
-    '恋人': 'warm embrace, blooming flowers, heart energy',
-    '创造者': 'cosmic creation, artistic swirls, birth of stars',
-    '小丑': 'playful light, colorful joy, dancing spirits',
-    '智者': 'contemplative figure, cosmic knowledge, starlit meditation',
-    '天真者': 'pure light, dewdrops, innocent morning',
-    '凡人': 'peaceful community, gentle connection, everyday magic',
-    '照顾者': 'nurturing light, protective embrace, healing energy',
-    '统治者': 'majestic presence, ordered cosmos, golden crown',
+  // 时间对应的光线
+  const timeLighting: Record<string, string> = {
+    dawn: 'soft pink and gold dawn light, gentle first rays',
+    morning: 'clear bright morning light, fresh and crisp',
+    afternoon: 'warm golden hour light, long soft shadows',
+    evening: 'amber sunset glow, purple twilight edges',
+    night: 'cool moonlight, soft starlight, ambient darkness',
   };
 
-  const elementVisual = elementVisuals[culturalReferences.dominantElement] || elementVisuals['土'];
-  const archetypeVisual = archetypeVisuals[culturalReferences.archetype] || 'spiritual journey';
+  // 季节对应的氛围
+  const seasonMood: Record<string, string> = {
+    spring: 'fresh, renewal, delicate blossoms, soft rain',
+    summer: 'lush, vibrant, full bloom, warm breeze',
+    autumn: 'contemplative, harvest colors, falling leaves, crisp air',
+    winter: 'serene, minimal, frost crystals, quiet stillness',
+  };
 
-  // 时间和季节影响
-  const timeVisual = userContext.time.includes('夜') ? 'night sky, stars, moon' :
-    userContext.time.includes('晨') ? 'sunrise, dawn, fresh beginning' :
-      userContext.time.includes('午') ? 'golden hour, warm sunlight' :
-        'sunset, dusk, twilight transition';
+  const element = culturalReferences.dominantElement;
+  const elementStyle = elementStyles[element] || elementStyles['土'];
+  const lighting = timeLighting[wisdomAnalysis.iChing.hexagram.name.includes('夜') ? 'night' :
+    data.userContext.time.includes('晨') ? 'dawn' :
+    data.userContext.time.includes('午') ? 'afternoon' : 'evening'];
+  const season = seasonMood[data.userContext.season === '春' ? 'spring' :
+    data.userContext.season === '夏' ? 'summer' :
+    data.userContext.season === '秋' ? 'autumn' : 'winter'];
 
-  const seasonVisual = userContext.season === '春' ? 'spring blossoms, renewal' :
-    userContext.season === '夏' ? 'summer vibrance, full bloom' :
-      userContext.season === '秋' ? 'autumn colors, harvest moon' :
-        'winter serenity, crystalline beauty';
-
-  // 情绪色调
-  let moodTone = 'peaceful, balanced';
-  if (wisdomAnalysis.psychology.emotionalState.pleasure > 0.3) {
-    moodTone = 'joyful, radiant, warm colors';
-  } else if (wisdomAnalysis.psychology.emotionalState.pleasure < -0.3) {
-    moodTone = 'contemplative, transformative, deep blues and purples';
-  }
-
-  return `A mystical, ethereal digital artwork in cosmic spiritual style:
-${elementVisual}, ${archetypeVisual}, ${timeVisual}, ${seasonVisual},
-Mood: ${moodTone},
-Style: dreamy, luminous, high quality, 8k, cinematic lighting, digital painting,
-A single human figure in meditation or contemplation, cosmic background,
-Chinese philosophy meets Western psychology, spiritual awakening,
-NOT photorealistic, artistic interpretation, emotional depth`;
+  return `Artistic illustration in soft watercolor and digital art blend style,
+${elementStyle.style} composition, ${elementStyle.elements},
+Color palette: ${elementStyle.palette},
+Lighting: ${lighting},
+Atmosphere: ${season}, ${userContext.moodVisual},
+A contemplative scene with subtle Eastern aesthetic influence,
+Soft dreamy quality, painterly brushstrokes, gentle gradients,
+High quality, artistic, emotional depth, poetic mood,
+NO text, NO words, NO letters, clean composition`;
 }
 
 // Functions are already exported inline above

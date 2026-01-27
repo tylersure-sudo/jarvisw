@@ -176,6 +176,11 @@ export interface PromptData {
     weather: string;
     location: string;
     moods: string[];
+    // 画面描述用的氛围词
+    timeAtmosphere: string;
+    seasonFeeling: string;
+    moodTone: string;
+    moodVisual: string;
   };
   culturalReferences: {
     hexagramName: string;
