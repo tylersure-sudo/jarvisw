@@ -235,23 +235,28 @@ export function ConversationScreen({ mode, onClose, onGenerateResponse }: Conver
   return (
     <div className="fixed inset-0 z-50 bg-gradient-to-b from-gray-900 via-purple-950/30 to-gray-900 flex flex-col">
       {/* 顶部栏 */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 backdrop-blur-sm">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 backdrop-blur-sm bg-black/20">
+        {/* 返回按钮 */}
         <button
           onClick={onClose}
-          className="p-2 -ml-2 text-gray-400 hover:text-white transition-colors group"
+          className="flex items-center gap-1.5 px-3 py-2 -ml-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-all group"
         >
-          <svg className="w-6 h-6 transform group-hover:-translate-x-1 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          <svg className="w-5 h-5 transform group-hover:-translate-x-0.5 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
             <path d="M15 18l-6-6 6-6" />
           </svg>
+          <span className="text-xs">返回</span>
         </button>
-        <div className="flex items-center gap-2">
-          <div className="relative w-2.5 h-2.5">
+
+        {/* 连接状态 */}
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+          <div className="relative w-2 h-2">
             <div className="absolute inset-0 rounded-full bg-emerald-400" />
             <div className="absolute inset-0 rounded-full bg-emerald-400 animate-ping" />
           </div>
-          <span className="text-gray-300 text-sm font-light tracking-wide">与宇宙对话中</span>
+          <span className="text-emerald-300 text-xs tracking-wide">对话中</span>
         </div>
-        <div className="w-10" />
+
+        <div className="w-16" />
       </div>
 
       {/* 消息列表 */}
@@ -308,7 +313,18 @@ export function ConversationScreen({ mode, onClose, onGenerateResponse }: Conver
         {/* 能量块提示 - 带丰富视觉效果 */}
         {showEnergyHint && (
           <div className="flex flex-col items-center py-6 animate-fadeIn">
-            <p className="text-gray-300 text-sm mb-4 font-light tracking-wide">轻点能量块注入灵感</p>
+            {/* 标题区 */}
+            <div className="text-center mb-5">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 mb-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
+                <span className="text-purple-300 text-[11px] tracking-wider">能量注入中</span>
+              </div>
+              <p className="text-gray-300 text-sm font-light tracking-wide flex items-center justify-center gap-2">
+                <span className="text-purple-400/50">✦</span>
+                轻点能量块为回响注入灵感
+                <span className="text-amber-400/50">✦</span>
+              </p>
+            </div>
             <div className="flex gap-4">
               {ENERGY_OPTIONS.map((energy) => {
                 const isCollected = collectedEnergies.find(e => e.id === energy.id);

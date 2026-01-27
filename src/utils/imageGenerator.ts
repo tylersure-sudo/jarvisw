@@ -1,10 +1,18 @@
 /**
  * 图标和背景图生成器
- * 使用 Gemini Imagen API 生成自定义图标和背景
+ *
+ * 注意: Google Imagen 3 API 需要 Vertex AI 认证（服务账号），
+ * 不支持简单的 API key 方式调用。
+ *
+ * 当前实现使用 SVG 占位符作为图标，
+ * 如需真正的 AI 图片生成，需要配置 Vertex AI 服务账号。
  */
 
 const GEMINI_API_KEY = 'AIzaSyAfTKruCoNpOOqHItV_JDq-nonl9Y4j6l8';
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
+
+// Imagen API 不可用，直接返回占位符
+const IMAGEN_AVAILABLE = false;
 
 // 图标缓存
 const iconCache = new Map<string, string>();
@@ -48,15 +56,24 @@ export const BACKGROUND_PROMPTS = {
 };
 
 /**
- * 使用 Gemini Imagen 生成图像
+ * 生成图像
+ * 注意: Imagen API 需要 Vertex AI 认证，当前直接返回 SVG 占位符
  */
-export async function generateImage(prompt: string, aspectRatio: string = '1:1'): Promise<string> {
+export async function generateImage(prompt: string, _aspectRatio: string = '1:1'): Promise<string> {
   // 检查缓存
-  const cacheKey = `${prompt}-${aspectRatio}`;
+  const cacheKey = `${prompt}-${_aspectRatio}`;
   if (iconCache.has(cacheKey)) {
     return iconCache.get(cacheKey)!;
   }
 
+  // Imagen API 不可用时，直接返回占位符
+  if (!IMAGEN_AVAILABLE) {
+    const placeholder = getPlaceholderIcon(prompt);
+    iconCache.set(cacheKey, placeholder);
+    return placeholder;
+  }
+
+  // 以下代码在 Imagen API 可用时才会执行
   try {
     const url = `${GEMINI_API_BASE}/imagen-3.0-generate-002:predict?key=${GEMINI_API_KEY}`;
 
@@ -69,7 +86,7 @@ export async function generateImage(prompt: string, aspectRatio: string = '1:1')
         instances: [{ prompt }],
         parameters: {
           sampleCount: 1,
-          aspectRatio,
+          aspectRatio: _aspectRatio,
           personGeneration: 'dont_allow',
           safetyFilterLevel: 'block_few',
         },
@@ -92,7 +109,6 @@ export async function generateImage(prompt: string, aspectRatio: string = '1:1')
     throw new Error('No image data returned');
   } catch (error) {
     console.error('Image generation failed:', error);
-    // 返回占位符
     return getPlaceholderIcon(prompt);
   }
 }

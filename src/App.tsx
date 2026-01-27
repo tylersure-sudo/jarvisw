@@ -122,14 +122,27 @@ function App() {
       <div className={`relative z-10 min-h-screen-safe flex flex-col safe-top safe-bottom transition-opacity duration-300 ${activeMode ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
         {/* 顶部 */}
         <header className="px-4 pt-4 pb-2 sm:px-6 sm:pt-6 text-center shrink-0">
-          <h1 className="text-2xl sm:text-3xl font-light tracking-wide">
-            <span className="bg-gradient-to-r from-purple-300 via-pink-300 to-amber-300 bg-clip-text text-transparent">
-              灵感回响
-            </span>
-          </h1>
-          <p className="mt-1 text-gray-500 text-xs sm:text-sm font-light">
-            与宇宙对话，聆听内心的声音
-          </p>
+          {/* 装饰光晕 */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-32 bg-gradient-to-b from-purple-500/20 via-pink-500/10 to-transparent blur-3xl pointer-events-none" />
+
+          <div className="relative">
+            {/* 标题 */}
+            <h1 className="text-2xl sm:text-3xl font-medium tracking-widest relative inline-block">
+              <span className="bg-gradient-to-r from-purple-300 via-pink-300 to-amber-300 bg-clip-text text-transparent">
+                灵感回响
+              </span>
+              {/* 星星装饰 */}
+              <span className="absolute -top-1 -right-4 text-amber-300/60 text-xs animate-pulse">✦</span>
+              <span className="absolute -bottom-1 -left-3 text-purple-300/50 text-[10px] animate-pulse" style={{ animationDelay: '0.5s' }}>✧</span>
+            </h1>
+
+            {/* 副标题 */}
+            <p className="mt-2 text-gray-400 text-xs sm:text-sm font-light tracking-wider flex items-center justify-center gap-2">
+              <span className="w-8 h-px bg-gradient-to-r from-transparent via-gray-600 to-transparent" />
+              <span>与宇宙对话 · 聆听内心</span>
+              <span className="w-8 h-px bg-gradient-to-r from-transparent via-gray-600 to-transparent" />
+            </p>
+          </div>
         </header>
 
         {/* 时空信息 */}
@@ -152,9 +165,13 @@ function App() {
 
         {/* 底部提示 */}
         <footer className="px-4 py-4 sm:py-6 text-center shrink-0 safe-bottom">
-          <p className="text-gray-600 text-xs">
-            融合易经智慧 · 荣格心理学 · 宇宙能量
-          </p>
+          <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-white/5 border border-white/5">
+            <span className="text-purple-400/60 text-[10px]">☯</span>
+            <p className="text-gray-500 text-[11px] tracking-wider">
+              易经智慧 · 荣格心理 · 宇宙能量
+            </p>
+            <span className="text-amber-400/60 text-[10px]">✧</span>
+          </div>
         </footer>
       </div>
     </div>

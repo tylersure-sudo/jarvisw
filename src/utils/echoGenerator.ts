@@ -32,11 +32,13 @@ export interface AIConfig {
 }
 
 // 默认配置 - 使用 Gemini
+// 注意: Imagen API 需要 Vertex AI 认证，不支持简单 API key
+// 因此默认禁用图片生成，使用 Unsplash 作为替代
 const defaultConfig: AIConfig = {
   enabled: true,
   provider: 'gemini',
   geminiApiKey: 'AIzaSyAfTKruCoNpOOqHItV_JDq-nonl9Y4j6l8',
-  enableImageGen: true,
+  enableImageGen: false, // Imagen 需要 Vertex AI，这里禁用
 };
 
 let currentConfig = { ...defaultConfig };
