@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { CosmicButton } from './CosmicButton';
+import type { ButtonType } from './CosmicButton';
 
 export type CallMode = 'daily' | 'mood' | 'dream' | 'question';
 
@@ -7,47 +9,39 @@ interface CallUniverseProps {
   isConnected: boolean;
 }
 
-const CALL_MODES = [
+const CALL_MODES: Array<{
+  id: CallMode;
+  buttonType: ButtonType;
+  title: string;
+  subtitle: string;
+}> = [
   {
-    id: 'daily' as CallMode,
+    id: 'daily',
+    buttonType: 'daily',
     title: '今日运势',
-    subtitle: '让宇宙告诉你今天的能量',
-    icon: '☀️',
-    color: 'from-amber-400 to-orange-500',
-    bgColor: 'from-amber-500/10 to-orange-500/10',
-    borderColor: 'border-amber-400/30',
+    subtitle: '感应宇宙能量',
   },
   {
-    id: 'mood' as CallMode,
+    id: 'mood',
+    buttonType: 'mood',
     title: '心情回响',
-    subtitle: '分享你的感受，获得宇宙回应',
-    icon: '💫',
-    color: 'from-purple-400 to-indigo-500',
-    bgColor: 'from-purple-500/10 to-indigo-500/10',
-    borderColor: 'border-purple-400/30',
+    subtitle: '与星河共鸣',
   },
   {
-    id: 'dream' as CallMode,
+    id: 'dream',
+    buttonType: 'dream',
     title: '梦境解析',
-    subtitle: '解读潜意识的信息',
-    icon: '🌙',
-    color: 'from-blue-400 to-cyan-500',
-    bgColor: 'from-blue-500/10 to-cyan-500/10',
-    borderColor: 'border-blue-400/30',
+    subtitle: '探索潜意识',
   },
   {
-    id: 'question' as CallMode,
+    id: 'question',
+    buttonType: 'question',
     title: '问问宇宙',
-    subtitle: '向宇宙提出你的疑问',
-    icon: '✨',
-    color: 'from-rose-400 to-pink-500',
-    bgColor: 'from-rose-500/10 to-pink-500/10',
-    borderColor: 'border-rose-400/30',
+    subtitle: '寻找答案',
   },
 ];
 
 export function CallUniverse({ onStartCall, isConnected }: CallUniverseProps) {
-  const [, setSelectedMode] = useState<CallMode | null>(null);
   const [showModes, setShowModes] = useState(false);
   const [pulsePhase, setPulsePhase] = useState(0);
 
@@ -55,17 +49,17 @@ export function CallUniverse({ onStartCall, isConnected }: CallUniverseProps) {
   useEffect(() => {
     const interval = setInterval(() => {
       setPulsePhase(prev => (prev + 1) % 360);
-    }, 50);
+    }, 40);
     return () => clearInterval(interval);
   }, []);
 
   const handleModeSelect = (mode: CallMode) => {
-    setSelectedMode(mode);
     setShowModes(false);
     onStartCall(mode);
   };
 
   const pulseOpacity = 0.3 + Math.sin(pulsePhase * Math.PI / 180) * 0.2;
+  const pulseScale = 1 + Math.sin(pulsePhase * Math.PI / 180) * 0.03;
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] px-4">
@@ -74,85 +68,97 @@ export function CallUniverse({ onStartCall, isConnected }: CallUniverseProps) {
         <div className="flex flex-col items-center">
           {/* 连接状态 */}
           <div className="flex items-center gap-2 mb-8">
-            <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-emerald-400' : 'bg-gray-500'} animate-pulse`} />
-            <span className="text-gray-400 text-sm">
-              {isConnected ? '已连接宇宙' : '等待连接...'}
+            <div className={`w-2.5 h-2.5 rounded-full ${isConnected ? 'bg-emerald-400' : 'bg-gray-500'}`}>
+              <div className={`w-full h-full rounded-full ${isConnected ? 'bg-emerald-400 animate-ping' : ''}`} />
+            </div>
+            <span className="text-gray-400 text-sm font-light tracking-wide">
+              {isConnected ? '宇宙频道已连接' : '正在连接宇宙...'}
             </span>
           </div>
 
-          {/* 中央呼叫按钮 */}
-          <button
-            onClick={() => setShowModes(true)}
-            className="relative group"
-          >
-            {/* 外层光环 */}
+          {/* 中央呼叫按钮 - 使用 CosmicButton */}
+          <div className="relative">
+            {/* 外层光环动画 */}
             <div
-              className="absolute inset-[-30px] rounded-full bg-gradient-to-br from-purple-500/20 to-indigo-500/20 blur-xl transition-all duration-500 group-hover:scale-110"
-              style={{ opacity: pulseOpacity }}
+              className="absolute inset-[-40px] rounded-full bg-gradient-to-br from-purple-500/20 via-indigo-500/15 to-violet-500/20 blur-2xl"
+              style={{
+                opacity: pulseOpacity,
+                transform: `scale(${pulseScale})`,
+              }}
             />
             <div
-              className="absolute inset-[-20px] rounded-full bg-gradient-to-br from-purple-500/30 to-indigo-500/30 blur-lg transition-all duration-500 group-hover:scale-105"
-              style={{ opacity: pulseOpacity + 0.1 }}
+              className="absolute inset-[-25px] rounded-full bg-gradient-to-br from-purple-500/30 via-indigo-500/20 to-violet-500/30 blur-xl"
+              style={{
+                opacity: pulseOpacity + 0.1,
+                transform: `scale(${pulseScale * 0.98})`,
+              }}
             />
 
-            {/* 主按钮 */}
-            <div className="relative w-36 h-36 rounded-full bg-gradient-to-br from-purple-600 to-indigo-700
-              flex items-center justify-center shadow-2xl
-              transition-all duration-300 group-hover:scale-105 group-active:scale-95
-              border border-purple-400/30"
-            >
-              {/* 内部装饰 */}
-              <div className="absolute inset-2 rounded-full border border-purple-300/20" />
-              <div className="absolute inset-4 rounded-full border border-purple-300/10" />
-
-              {/* 图标和文字 */}
-              <div className="flex flex-col items-center">
-                <span className="text-4xl mb-1">🌌</span>
-                <span className="text-white/90 text-sm font-light tracking-wider">呼叫宇宙</span>
-              </div>
-            </div>
-          </button>
+            <CosmicButton
+              type="call"
+              title="呼叫宇宙"
+              subtitle="开始对话"
+              onClick={() => setShowModes(true)}
+              size="xl"
+            />
+          </div>
 
           {/* 提示文字 */}
-          <p className="mt-8 text-gray-500 text-sm text-center max-w-xs">
-            轻触按钮，开始与宇宙对话
+          <p className="mt-10 text-gray-500 text-sm text-center max-w-xs font-light">
+            轻触按钮，开启与宇宙的神秘对话
           </p>
+
+          {/* 装饰星星 */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            {[...Array(20)].map((_, i) => (
+              <div
+                key={i}
+                className="absolute w-1 h-1 bg-white rounded-full animate-pulse"
+                style={{
+                  left: `${Math.random() * 100}%`,
+                  top: `${Math.random() * 100}%`,
+                  opacity: 0.2 + Math.random() * 0.3,
+                  animationDelay: `${i * 0.15}s`,
+                  animationDuration: `${2 + Math.random() * 2}s`,
+                }}
+              />
+            ))}
+          </div>
         </div>
       ) : (
         /* 模式选择 */
-        <div className="w-full max-w-sm animate-fadeIn">
-          <h3 className="text-center text-gray-300 text-lg font-light mb-6">
-            你想和宇宙聊些什么？
+        <div className="w-full max-w-md animate-fadeIn">
+          <h3 className="text-center text-gray-200 text-xl font-light mb-2 tracking-wide">
+            选择对话方式
           </h3>
+          <p className="text-center text-gray-500 text-sm mb-8">
+            你想和宇宙聊些什么？
+          </p>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-4 px-2">
             {CALL_MODES.map((mode) => (
-              <button
-                key={mode.id}
-                onClick={() => handleModeSelect(mode.id)}
-                className={`relative p-4 rounded-2xl bg-gradient-to-br ${mode.bgColor}
-                  border ${mode.borderColor}
-                  transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]
-                  group overflow-hidden`}
-              >
-                {/* 悬停光效 */}
-                <div className={`absolute inset-0 bg-gradient-to-br ${mode.color} opacity-0 group-hover:opacity-10 transition-opacity`} />
-
-                <div className="relative flex flex-col items-center text-center">
-                  <span className="text-3xl mb-2">{mode.icon}</span>
-                  <span className="text-white/90 text-sm font-medium">{mode.title}</span>
-                  <span className="text-gray-500 text-[10px] mt-1">{mode.subtitle}</span>
-                </div>
-              </button>
+              <div key={mode.id} className="flex justify-center">
+                <CosmicButton
+                  type={mode.buttonType}
+                  title={mode.title}
+                  subtitle={mode.subtitle}
+                  onClick={() => handleModeSelect(mode.id)}
+                  size="lg"
+                />
+              </div>
             ))}
           </div>
 
           {/* 返回按钮 */}
           <button
             onClick={() => setShowModes(false)}
-            className="w-full mt-4 py-3 text-gray-500 text-sm hover:text-gray-300 transition-colors"
+            className="w-full mt-8 py-4 text-gray-400 text-sm hover:text-gray-200 transition-all
+              flex items-center justify-center gap-2 group"
           >
-            返回
+            <svg className="w-4 h-4 transform group-hover:-translate-x-1 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+            <span>返回</span>
           </button>
         </div>
       )}

@@ -10,3 +10,7 @@ export { VoiceOutput } from './VoiceOutput';
 export { CallUniverse } from './CallUniverse';
 export type { CallMode } from './CallUniverse';
 export { ConversationScreen } from './ConversationScreen';
+export { CosmicIcon } from './CosmicIcon';
+export type { IconType } from './CosmicIcon';
+export { CosmicButton } from './CosmicButton';
+export type { ButtonType } from './CosmicButton';
