@@ -1,5 +1,5 @@
 {
-  "miniprogramRoot": "dist/",
+  "miniprogramRoot": "./",
   "projectname": "lingganhuixiang",
   "description": "灵感回响 - 与宇宙对话",
   "appid": "touristappid",
