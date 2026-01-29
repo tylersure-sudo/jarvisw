@@ -1,0 +1,382 @@
+.page {
+  min-height: 100vh;
+  background: linear-gradient(to bottom, #111827, rgba(88, 28, 135, 0.12), #111827);
+  position: relative;
+  overflow: hidden;
+}
+
+/* ============ 星空背景 ============ */
+.stars-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.star {
+  position: absolute;
+  border-radius: 50%;
+  background-color: #ffffff;
+  animation: pulse 3s ease-in-out infinite;
+}
+
+/* ============ 时空背景信息 ============ */
+.spacetime-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.spacetime-top {
+  position: absolute;
+  top: 60rpx;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+}
+
+.shichen-text {
+  font-size: 72rpx;
+  font-weight: 200;
+  letter-spacing: 0.3em;
+  color: rgba(233, 213, 255, 0.4);
+}
+
+.spacetime-left {
+  position: absolute;
+  left: 30rpx;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0.3;
+}
+
+.spacetime-right {
+  position: absolute;
+  right: 30rpx;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0.3;
+}
+
+.vertical-text {
+  writing-mode: vertical-rl;
+  font-size: 24rpx;
+  letter-spacing: 0.5em;
+  color: #9ca3af;
+  font-weight: 300;
+}
+
+.spacetime-bottom {
+  position: absolute;
+  bottom: 160rpx;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  opacity: 0.3;
+}
+
+.city-text {
+  font-size: 22rpx;
+  letter-spacing: 0.15em;
+  color: #6b7280;
+}
+
+/* ============ 中央区域 ============ */
+.main-area {
+  position: relative;
+  z-index: 10;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 30rpx;
+}
+
+/* ============ 感应时空 ============ */
+.sense-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.sense-glow {
+  position: absolute;
+  width: 320rpx;
+  height: 320rpx;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.2), rgba(234, 88, 12, 0.1), transparent);
+  filter: blur(30px);
+  top: -30rpx;
+}
+
+.sense-btn {
+  width: 240rpx;
+  height: 240rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(217, 119, 6, 0.8), rgba(194, 65, 12, 0.8));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  border: 1rpx solid rgba(251, 191, 36, 0.3);
+  box-shadow: 0 20rpx 60rpx rgba(0, 0, 0, 0.3);
+}
+
+.sense-btn.loading {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.sense-shine {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.2), transparent);
+}
+
+.spinner {
+  width: 60rpx;
+  height: 60rpx;
+  border: 4rpx solid rgba(255, 255, 255, 0.3);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.sense-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.sense-icon {
+  font-size: 60rpx;
+  color: #fef3c7;
+}
+
+.sense-label {
+  font-size: 22rpx;
+  color: #fef3c7;
+  letter-spacing: 0.1em;
+  margin-top: 12rpx;
+}
+
+.sense-hint {
+  margin-top: 60rpx;
+  font-size: 24rpx;
+  color: #6b7280;
+  font-weight: 300;
+}
+
+/* ============ 呼叫宇宙 ============ */
+.call-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.connect-status {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 60rpx;
+  position: relative;
+}
+
+.connect-dot {
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 50%;
+  background-color: #34d399;
+}
+
+.connect-ping {
+  position: absolute;
+  left: 0;
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 50%;
+  background-color: #34d399;
+  animation: ping 1.5s ease-out infinite;
+}
+
+.connect-text {
+  font-size: 24rpx;
+  color: #9ca3af;
+  font-weight: 300;
+  letter-spacing: 0.05em;
+}
+
+.call-glow-outer {
+  position: absolute;
+  width: 400rpx;
+  height: 400rpx;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.15), rgba(99, 102, 241, 0.1), transparent);
+  filter: blur(40px);
+  animation: breathe 4s ease-in-out infinite;
+}
+
+.call-glow-inner {
+  position: absolute;
+  width: 340rpx;
+  height: 340rpx;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.25), rgba(99, 102, 241, 0.15), transparent);
+  filter: blur(25px);
+  animation: breathe 4s ease-in-out infinite 0.5s;
+}
+
+.call-btn {
+  width: 300rpx;
+  height: 300rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed, #6d28d9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  border: 1rpx solid rgba(196, 181, 253, 0.3);
+  box-shadow: 0 0 60rpx rgba(139, 92, 246, 0.4), 0 20rpx 60rpx rgba(0, 0, 0, 0.3);
+}
+
+.call-shine {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.15), transparent, rgba(0, 0, 0, 0.15));
+}
+
+.call-orbit {
+  position: absolute;
+  border-radius: 50%;
+  border: 1rpx solid rgba(196, 181, 253, 0.3);
+}
+
+.orbit-1 {
+  width: 260rpx;
+  height: 100rpx;
+  transform: rotate(-25deg);
+}
+
+.orbit-2 {
+  width: 220rpx;
+  height: 80rpx;
+  transform: rotate(35deg);
+  border-color: rgba(221, 214, 254, 0.2);
+}
+
+.call-core {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #ede9fe, #a78bfa);
+  margin-bottom: 12rpx;
+}
+
+.call-title {
+  font-size: 30rpx;
+  color: #ffffff;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+}
+
+.call-subtitle {
+  font-size: 22rpx;
+  color: rgba(255, 255, 255, 0.6);
+  margin-top: 6rpx;
+}
+
+/* ============ 模式选择 ============ */
+.modes-section {
+  width: 100%;
+  max-width: 640rpx;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.modes-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24rpx;
+  padding: 0 16rpx;
+}
+
+.mode-card {
+  height: 260rpx;
+  border-radius: 36rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  border: 1rpx solid rgba(255, 255, 255, 0.15);
+}
+
+.mode-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.15), transparent, rgba(0, 0, 0, 0.15));
+}
+
+.mode-daily {
+  background: linear-gradient(135deg, #d97706, #ea580c, #eab308);
+  box-shadow: 0 0 30rpx rgba(251, 191, 36, 0.3);
+}
+
+.mode-mood {
+  background: linear-gradient(135deg, #7c3aed, #a855f7, #d946ef);
+  box-shadow: 0 0 30rpx rgba(167, 139, 250, 0.3);
+}
+
+.mode-dream {
+  background: linear-gradient(135deg, #2563eb, #6366f1, #06b6d4);
+  box-shadow: 0 0 30rpx rgba(99, 102, 241, 0.3);
+}
+
+.mode-question {
+  background: linear-gradient(135deg, #e11d48, #ec4899, #ef4444);
+  box-shadow: 0 0 30rpx rgba(244, 114, 182, 0.3);
+}
+
+.mode-emoji {
+  font-size: 60rpx;
+  margin-bottom: 16rpx;
+  position: relative;
+  z-index: 1;
+}
+
+.mode-title {
+  font-size: 28rpx;
+  color: #ffffff;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  position: relative;
+  z-index: 1;
+}
+
+.mode-subtitle {
+  font-size: 20rpx;
+  color: rgba(255, 255, 255, 0.7);
+  margin-top: 6rpx;
+  position: relative;
+  z-index: 1;
+}
+
+.back-btn {
+  margin-top: 40rpx;
+  padding: 16rpx 0;
+  text-align: center;
+}
+
+.back-text {
+  font-size: 22rpx;
+  color: #6b7280;
+}

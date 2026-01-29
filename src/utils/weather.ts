@@ -1,18 +1,20 @@
+import Taro from '@tarojs/taro';
 import type { WeatherInfo, LocationInfo } from '../types';
 
 // 使用免费的 Open-Meteo API
 export async function getWeather(location: LocationInfo): Promise<WeatherInfo> {
   const { latitude, longitude } = location;
 
-  const response = await fetch(
-    `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&timezone=auto`
-  );
+  const response = await Taro.request({
+    url: `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&timezone=auto`,
+    method: 'GET',
+  });
 
-  if (!response.ok) {
+  if (response.statusCode !== 200) {
     throw new Error('获取天气信息失败');
   }
 
-  const data = await response.json();
+  const data = response.data as any;
   const current = data.current;
 
   return {

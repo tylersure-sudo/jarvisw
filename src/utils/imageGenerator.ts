@@ -8,7 +8,7 @@
  * 如需真正的 AI 图片生成，需要配置 Vertex AI 服务账号。
  */
 
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
+const GEMINI_API_KEY = process.env.TARO_APP_GEMINI_API_KEY || '';
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 
 // Imagen API 不可用，直接返回占位符

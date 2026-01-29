@@ -4,6 +4,7 @@
  * 支持 Gemini API (文字 + 图片)
  */
 
+import Taro from '@tarojs/taro';
 import type { SpaceTimeContext, SelectedMood, EchoResponse } from '../types';
 import type { EnergyBlock } from '../components/EnergyBlocks';
 import {
@@ -33,7 +34,7 @@ export interface AIConfig {
 const defaultConfig: AIConfig = {
   enabled: true,
   provider: 'gemini',
-  geminiApiKey: import.meta.env.VITE_GEMINI_API_KEY || '',
+  geminiApiKey: process.env.TARO_APP_GEMINI_API_KEY || '',
   enableImageGen: true,
 };
 
@@ -61,12 +62,13 @@ async function generateStoryWithGemini(prompt: string): Promise<string> {
 
   const url = `${GEMINI_API_BASE}/gemini-2.0-flash:generateContent?key=${currentConfig.geminiApiKey}`;
 
-  const response = await fetch(url, {
+  const response = await Taro.request({
+    url,
     method: 'POST',
-    headers: {
+    header: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
+    data: {
       contents: [
         {
           parts: [{ text: prompt }],
@@ -84,16 +86,15 @@ async function generateStoryWithGemini(prompt: string): Promise<string> {
         { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
         { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
       ],
-    }),
+    },
   });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('Gemini API error:', errorText);
-    throw new Error(`Gemini API error: ${response.status}`);
+  if (response.statusCode !== 200) {
+    console.error('Gemini API error:', response.data);
+    throw new Error(`Gemini API error: ${response.statusCode}`);
   }
 
-  const data = await response.json();
+  const data = response.data as any;
   const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
   if (!text) {
     throw new Error('No content generated from Gemini');
@@ -110,12 +111,13 @@ async function generateImageWithGemini(prompt: string): Promise<string> {
 
   const url = `${GEMINI_API_BASE}/gemini-2.0-flash-exp-image-generation:generateContent?key=${currentConfig.geminiApiKey}`;
 
-  const response = await fetch(url, {
+  const response = await Taro.request({
+    url,
     method: 'POST',
-    headers: {
+    header: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
+    data: {
       contents: [
         {
           parts: [{ text: prompt }],
@@ -125,16 +127,15 @@ async function generateImageWithGemini(prompt: string): Promise<string> {
         responseModalities: ['IMAGE', 'TEXT'],
         temperature: 0.8,
       },
-    }),
+    },
   });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('Gemini Image API error:', errorText);
-    throw new Error(`Gemini Image API error: ${response.status}`);
+  if (response.statusCode !== 200) {
+    console.error('Gemini Image API error:', response.data);
+    throw new Error(`Gemini Image API error: ${response.statusCode}`);
   }
 
-  const data = await response.json();
+  const data = response.data as any;
 
   // Gemini 2.0 Flash 返回 inlineData 中的 base64 图片
   const parts = data.candidates?.[0]?.content?.parts;
@@ -256,26 +257,27 @@ async function generateStoryWithCustomAPI(promptData: ReturnType<typeof prepareP
     throw new Error('Story API endpoint not configured');
   }
 
-  const response = await fetch(currentConfig.storyApiEndpoint, {
+  const response = await Taro.request({
+    url: currentConfig.storyApiEndpoint,
     method: 'POST',
-    headers: {
+    header: {
       'Content-Type': 'application/json',
       ...(currentConfig.storyApiKey && {
         Authorization: `Bearer ${currentConfig.storyApiKey}`,
       }),
     },
-    body: JSON.stringify({
+    data: {
       prompt,
       max_tokens: 1000,
       temperature: 0.8,
-    }),
+    },
   });
 
-  if (!response.ok) {
-    throw new Error(`API error: ${response.status}`);
+  if (response.statusCode !== 200) {
+    throw new Error(`API error: ${response.statusCode}`);
   }
 
-  const data = await response.json();
+  const data = response.data as any;
   return data.content || data.text || data.choices?.[0]?.message?.content || '';
 }
 
