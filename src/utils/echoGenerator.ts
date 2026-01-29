@@ -29,14 +29,12 @@ export interface AIConfig {
   imageApiKey?: string;
 }
 
-// 默认配置 - 使用 Gemini
-// 注意: Imagen API 需要 Vertex AI 认证，不支持简单 API key
-// 因此默认禁用图片生成，使用 Unsplash 作为替代
+// 默认配置 - 使用 Gemini 2.0 Flash（支持文字和图片生成）
 const defaultConfig: AIConfig = {
   enabled: true,
   provider: 'gemini',
-  geminiApiKey: 'AIzaSyAfTKruCoNpOOqHItV_JDq-nonl9Y4j6l8',
-  enableImageGen: false, // Imagen 需要 Vertex AI，这里禁用
+  geminiApiKey: import.meta.env.VITE_GEMINI_API_KEY || '',
+  enableImageGen: true,
 };
 
 let currentConfig = { ...defaultConfig };
@@ -104,14 +102,13 @@ async function generateStoryWithGemini(prompt: string): Promise<string> {
   return text;
 }
 
-/** 使用 Gemini Imagen 生成图片 */
+/** 使用 Gemini 2.0 Flash 生成图片 */
 async function generateImageWithGemini(prompt: string): Promise<string> {
   if (!currentConfig.geminiApiKey) {
     throw new Error('Gemini API key not configured');
   }
 
-  // 使用 Imagen 3 模型生成图片
-  const url = `${GEMINI_API_BASE}/imagen-3.0-generate-002:predict?key=${currentConfig.geminiApiKey}`;
+  const url = `${GEMINI_API_BASE}/gemini-2.0-flash-exp-image-generation:generateContent?key=${currentConfig.geminiApiKey}`;
 
   const response = await fetch(url, {
     method: 'POST',
@@ -119,41 +116,38 @@ async function generateImageWithGemini(prompt: string): Promise<string> {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      instances: [
+      contents: [
         {
-          prompt: prompt,
+          parts: [{ text: prompt }],
         },
       ],
-      parameters: {
-        sampleCount: 1,
-        aspectRatio: '3:4',
-        personGeneration: 'dont_allow',
-        safetyFilterLevel: 'block_few',
+      generationConfig: {
+        responseModalities: ['IMAGE', 'TEXT'],
+        temperature: 0.8,
       },
     }),
   });
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error('Gemini Imagen API error:', errorText);
-    throw new Error(`Gemini Imagen API error: ${response.status}`);
+    console.error('Gemini Image API error:', errorText);
+    throw new Error(`Gemini Image API error: ${response.status}`);
   }
 
   const data = await response.json();
 
-  // Imagen 返回 base64 编码的图片
-  const imageData = data.predictions?.[0]?.bytesBase64Encoded;
-  if (imageData) {
-    return `data:image/png;base64,${imageData}`;
+  // Gemini 2.0 Flash 返回 inlineData 中的 base64 图片
+  const parts = data.candidates?.[0]?.content?.parts;
+  if (parts) {
+    for (const part of parts) {
+      if (part.inlineData) {
+        const mimeType = part.inlineData.mimeType || 'image/png';
+        return `data:${mimeType};base64,${part.inlineData.data}`;
+      }
+    }
   }
 
-  // 如果返回的是 URL
-  const imageUrl = data.predictions?.[0]?.uri;
-  if (imageUrl) {
-    return imageUrl;
-  }
-
-  throw new Error('No image generated from Gemini Imagen');
+  throw new Error('No image generated from Gemini');
 }
 
 // ==================== 主生成函数 ====================
@@ -219,7 +213,7 @@ export async function generateEcho(
   // 尝试使用 Gemini 生成图片
   if (currentConfig.enabled && currentConfig.enableImageGen && currentConfig.geminiApiKey) {
     try {
-      console.log('正在使用 Gemini Imagen 生成图片...');
+      console.log('正在使用 Gemini 2.0 Flash 生成图片...');
       let imagePrompt = generateImagePrompt(promptData);
       // 添加能量块对图片的影响
       if (energies.length > 0) {
@@ -237,7 +231,7 @@ export async function generateEcho(
         imagePrompt += `, ${energyVisuals.join(', ')}`;
       }
       imageUrl = await generateImageWithGemini(imagePrompt);
-      console.log('Gemini 图片生成成功');
+      console.log('Gemini 2.0 Flash 图片生成成功');
     } catch (error) {
       console.error('AI图片生成失败，使用占位图:', error);
       imageUrl = getPlaceholderImage(wisdomAnalysis, context, moods);
