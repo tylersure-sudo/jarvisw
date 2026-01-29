@@ -19,6 +19,9 @@ const config = {
   framework: 'react',
   compiler: 'webpack5',
   mini: {
+    miniCssExtractPluginOption: {
+      ignoreOrder: true,
+    },
     postcss: {
       pxtransform: {
         enable: true,
@@ -28,6 +31,8 @@ const config = {
         enable: false,
       },
     },
+    // 使用 CustomWrapper 包裹组件，提升兼容性
+    baseLevel: 16,
   },
   h5: {
     publicPath: '/',

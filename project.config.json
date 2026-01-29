@@ -27,5 +27,6 @@
     }
   },
   "compileType": "miniprogram",
+  "libVersion": "3.6.0",
   "condition": {}
 }
